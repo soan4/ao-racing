@@ -6,92 +6,1894 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#87ceeb">
   <title>あおのレーシング</title>
+
   <style>
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:#87ceeb}
-    body{display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-    #gameWrap{position:relative;width:min(100vw,520px);height:100vh;height:100dvh;overflow:hidden;background:#87ceeb;user-select:none}
-    canvas{display:block;width:100%;height:100%;pointer-events:none}
-    #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;z-index:3;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-    .badge{background:rgba(255,255,255,.96);border:3px solid white;border-radius:18px;padding:8px 14px;font-weight:800;font-size:20px;box-shadow:0 4px 10px rgba(0,0,0,.15)}
-    #controls{position:absolute;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));z-index:4;display:flex;justify-content:space-between;padding:0 18px}
-    .control{width:42%;height:88px;border:0;border-radius:28px;font-size:46px;font-weight:900;background:rgba(255,255,255,.96);box-shadow:0 7px 0 rgba(0,0,0,.22);touch-action:manipulation;cursor:pointer}
-    .control:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(0,0,0,.22)}
-    #startPanel,#gameOver{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(40,120,180,.34)}
-    #gameOver{display:none}
-    .card{width:100%;background:rgba(255,255,255,.97);border:5px solid white;border-radius:34px;text-align:center;padding:24px 18px;box-shadow:0 12px 28px rgba(0,0,0,.2)}
-    h1{margin:0 0 12px;font-size:38px;line-height:1.15}
-    .carHero{font-size:88px;line-height:1}
-    .lead{font-size:22px;font-weight:700;line-height:1.55;margin:10px 0 18px}
-    .bigBtn{position:relative;z-index:30;width:100%;min-height:82px;border:0;border-radius:28px;font-size:30px;font-weight:900;color:white;background:#ff6b35;box-shadow:0 7px 0 #b93f19;touch-action:manipulation;cursor:pointer}
-    .bigBtn:active{transform:translateY(5px);box-shadow:0 2px 0 #b93f19}
-    .small{font-size:18px;margin-top:14px}
+    :root {
+      --orange: #ff6b35;
+      --orange-dark: #b93f19;
+      --blue: #1676e8;
+      --panel: rgba(255,255,255,.97);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family:
+        system-ui,
+        -apple-system,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: #87ceeb;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    #gameWrap {
+      position: relative;
+      width: min(100vw, 520px);
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: #87ceeb;
+      user-select: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #hud {
+      position: absolute;
+      top: max(8px, env(safe-area-inset-top));
+      left: 8px;
+      right: 8px;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .badge {
+      min-width: 0;
+      padding: 7px 9px;
+      border: 3px solid white;
+      border-radius: 17px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 4px 10px rgba(0,0,0,.14);
+      font-size: 17px;
+      font-weight: 900;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #starBadge {
+      text-align: left;
+    }
+
+    #bestBadge {
+      text-align: right;
+    }
+
+    #starTrail {
+      display: block;
+      margin-top: 1px;
+      max-width: 130px;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    #missionBar {
+      position: absolute;
+      top: max(79px, calc(env(safe-area-inset-top) + 79px));
+      left: 50%;
+      z-index: 5;
+      width: min(calc(100% - 32px), 420px);
+      padding: 8px 12px;
+      border: 3px solid white;
+      border-radius: 18px;
+      background: rgba(20,51,91,.88);
+      box-shadow: 0 4px 10px rgba(0,0,0,.16);
+      color: white;
+      font-size: 16px;
+      font-weight: 900;
+      text-align: center;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    #warningText {
+      position: absolute;
+      top: 31%;
+      left: 50%;
+      z-index: 7;
+      display: none;
+      padding: 10px 18px;
+      border: 4px solid white;
+      border-radius: 22px;
+      background: #ffcf25;
+      box-shadow: 0 6px 15px rgba(0,0,0,.22);
+      color: #342400;
+      font-size: 30px;
+      font-weight: 1000;
+      transform: translateX(-50%);
+      animation: warningPulse .35s infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes warningPulse {
+      from { transform: translateX(-50%) scale(.96); }
+      to   { transform: translateX(-50%) scale(1.07); }
+    }
+
+    #topButtons {
+      position: absolute;
+      top: max(120px, calc(env(safe-area-inset-top) + 120px));
+      right: 10px;
+      z-index: 8;
+      display: flex;
+      gap: 7px;
+    }
+
+    .roundButton {
+      width: 51px;
+      height: 51px;
+      padding: 0;
+      border: 3px solid white;
+      border-radius: 17px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 5px 0 rgba(0,0,0,.2);
+      font-size: 25px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .roundButton:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 rgba(0,0,0,.2);
+    }
+
+    #controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index: 8;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .control {
+      width: 42%;
+      height: 88px;
+      border: 0;
+      border-radius: 28px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 7px 0 rgba(0,0,0,.22);
+      font-size: 46px;
+      font-weight: 900;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .control:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 rgba(0,0,0,.22);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(27,98,154,.5);
+      overflow-y: auto;
+    }
+
+    #gameOver,
+    #missionComplete,
+    #pausePanel {
+      display: none;
+    }
+
+    .card {
+      width: 100%;
+      max-height: calc(100dvh - 30px);
+      overflow-y: auto;
+      padding: 22px 17px;
+      border: 5px solid white;
+      border-radius: 32px;
+      background: var(--panel);
+      box-shadow: 0 12px 28px rgba(0,0,0,.23);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(31px, 8vw, 40px);
+      line-height: 1.15;
+    }
+
+    h2 {
+      margin: 14px 0 7px;
+      font-size: 19px;
+    }
+
+    .carHero {
+      font-size: 76px;
+      line-height: 1;
+    }
+
+    .lead {
+      margin: 8px 0 15px;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .optionGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .optionButton {
+      min-height: 66px;
+      padding: 7px 4px;
+      border: 3px solid #cbd8e8;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 4px 0 #b8c3d1;
+      color: #24324a;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.25;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .optionButton .emoji {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 28px;
+    }
+
+    .optionButton.selected {
+      border-color: #1676e8;
+      background: #ddecff;
+      box-shadow: 0 4px 0 #0e51a5;
+      color: #073d82;
+    }
+
+    .bigBtn {
+      width: 100%;
+      min-height: 77px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 27px;
+      background: var(--orange);
+      box-shadow: 0 7px 0 var(--orange-dark);
+      color: white;
+      font-size: 29px;
+      font-weight: 1000;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .bigBtn:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 var(--orange-dark);
+    }
+
+    .small {
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #536274;
+    }
+
+    .resultStars {
+      margin: 7px 0;
+      font-size: 29px;
+      line-height: 1.2;
+      word-break: break-all;
+    }
+
+    @media (max-height: 700px) {
+      .card {
+        padding-top: 15px;
+        padding-bottom: 15px;
+      }
+
+      h2 {
+        margin-top: 9px;
+      }
+
+      .optionButton {
+        min-height: 57px;
+      }
+
+      .carHero {
+        font-size: 58px;
+      }
+
+      .bigBtn {
+        min-height: 67px;
+        margin-top: 12px;
+      }
+    }
   </style>
 </head>
+
 <body>
 <div id="gameWrap">
   <canvas id="game"></canvas>
+
   <div id="hud">
-    <div class="badge">⭐ <span id="score">0</span></div>
-    <div class="badge">💙 <span id="lives">2</span></div>
-    <div class="badge">🏁 <span id="best">0</span></div>
+    <div class="badge" id="starBadge">
+      ⭐ <span id="score">0</span>
+      <span id="starTrail">☆☆☆☆☆</span>
+    </div>
+
+    <div class="badge" id="livesBadge">
+      💙💙
+    </div>
+
+    <div class="badge" id="bestBadge">
+      🏁 <span id="best">0</span>
+    </div>
   </div>
+
+  <div id="missionBar">
+    ミッションを えらぼう！
+  </div>
+
+  <div id="warningText">⚠️ あぶない！</div>
+
+  <div id="topButtons">
+    <button class="roundButton" id="soundBtn" type="button" aria-label="おと">🔊</button>
+    <button class="roundButton" id="pauseBtn" type="button" aria-label="いちじていし">⏸️</button>
+  </div>
+
   <div id="controls">
     <button class="control" id="leftBtn" type="button" aria-label="ひだり">⬅️</button>
     <button class="control" id="rightBtn" type="button" aria-label="みぎ">➡️</button>
   </div>
-  <div id="startPanel">
+
+  <div class="overlay" id="startPanel">
     <div class="card">
       <div class="carHero">🚓</div>
       <h1>あおの<br>レーシング</h1>
-      <div class="lead">ひだり・みぎに うごいて<br>しょうがいぶつを よけよう！</div>
-      <button class="bigBtn" id="startBtn" type="button">スタート！</button>
-      <div class="small">2かい ぶつかると おしまいだよ</div>
+      <div class="lead">
+        ビークルを えらんで<br>
+        パトロールに しゅっぱつ！
+      </div>
+
+      <h2>① ビークル</h2>
+      <div class="optionGrid" id="vehicleOptions">
+        <button class="optionButton selected" type="button" data-value="police">
+          <span class="emoji">🚓</span>
+          あおい<br>ポリスカー
+        </button>
+        <button class="optionButton" type="button" data-value="rescue">
+          <span class="emoji">🚒</span>
+          あかい<br>レスキュー
+        </button>
+        <button class="optionButton" type="button" data-value="builder">
+          <span class="emoji">🚜</span>
+          きいろい<br>こうじカー
+        </button>
+      </div>
+
+      <h2>② むずかしさ</h2>
+      <div class="optionGrid" id="difficultyOptions">
+        <button class="optionButton selected" type="button" data-value="easy">
+          <span class="emoji">🐢</span>
+          やさしい
+        </button>
+        <button class="optionButton" type="button" data-value="normal">
+          <span class="emoji">🚗</span>
+          ふつう
+        </button>
+        <button class="optionButton" type="button" data-value="fast">
+          <span class="emoji">🚀</span>
+          はやい
+        </button>
+      </div>
+
+      <h2>③ ミッション</h2>
+      <div class="optionGrid" id="missionOptions">
+        <button class="optionButton selected" type="button" data-value="time">
+          <span class="emoji">⏱️</span>
+          30びょう<br>はしろう
+        </button>
+        <button class="optionButton" type="button" data-value="stars">
+          <span class="emoji">⭐</span>
+          ほしを<br>5こ
+        </button>
+        <button class="optionButton" type="button" data-value="rescue">
+          <span class="emoji">🐶</span>
+          3にん<br>たすけよう
+        </button>
+      </div>
+
+      <button class="bigBtn" id="startBtn" type="button">
+        しゅっぱつ！
+      </button>
+
+      <div class="small">
+        ボタンでも スワイプでも うごかせるよ
+      </div>
     </div>
   </div>
-  <div id="gameOver">
+
+  <div class="overlay" id="pausePanel">
     <div class="card">
-      <div class="carHero">😄</div>
-      <h1>もういっかい！</h1>
-      <div class="lead">スコア：<span id="finalScore">0</span><br>よくがんばったね！</div>
-      <button class="bigBtn" id="retryBtn" type="button">もういちど</button>
+      <div class="carHero">⏸️</div>
+      <h1>いったん<br>おやすみ</h1>
+      <button class="bigBtn" id="resumeBtn" type="button">
+        つづける
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="missionComplete">
+    <div class="card">
+      <div class="carHero">🎉</div>
+      <h1>パトロール<br>せいこう！</h1>
+      <div class="lead" id="completeMessage">
+        やったね！
+      </div>
+      <div class="resultStars" id="completeStars"></div>
+      <button class="bigBtn" id="completeRetryBtn" type="button">
+        もういちど
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameOver">
+    <div class="card">
+      <div class="carHero">😊</div>
+      <h1>よく<br>がんばったね！</h1>
+      <div class="lead">
+        スコア：<span id="finalScore">0</span>
+      </div>
+      <div class="resultStars" id="finalStars"></div>
+      <button class="bigBtn" id="retryBtn" type="button">
+        もういちど
+      </button>
     </div>
   </div>
 </div>
+
 <script>
 (() => {
   "use strict";
-  const $=id=>document.getElementById(id),canvas=$("game"),ctx=canvas.getContext("2d"),wrap=$("gameWrap");
-  let W=0,H=0,dpr=1,running=false,lastTime=0,score=0,lives=2;
-  let best=Number(localStorage.getItem("aoRacingBest")||0),roadOffset=0,spawnTimer=0,speed=250;
-  let obstacles=[],sparkles=[],currentLane=1,spinTime=0,invincibleTime=0;
-  const player={x:0,y:0,width:76,height:104,targetX:0,rotation:0};
-  $("best").textContent=best;
-  function roadBounds(){const roadW=Math.min(W*.72,360);return{left:(W-roadW)/2,right:(W+roadW)/2,width:roadW}}
-  function laneWidth(){return roadBounds().width/3}
-  function laneCenter(index){const road=roadBounds(),lw=laneWidth();return road.left+lw*index+lw/2}
-  function playerXFromLane(index){return laneCenter(index)-player.width/2}
-  function setLane(index,snap=false){currentLane=Math.max(0,Math.min(2,index));player.targetX=playerXFromLane(currentLane);if(snap)player.x=player.targetX}
-  function resize(){const rect=wrap.getBoundingClientRect();W=rect.width;H=rect.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.max(1,Math.floor(W*dpr));canvas.height=Math.max(1,Math.floor(H*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);player.y=H-218;setLane(currentLane,true);draw()}
-  function startGame(e){if(e){e.preventDefault();e.stopPropagation()}score=0;lives=2;speed=250;roadOffset=0;spawnTimer=1.2;obstacles=[];sparkles=[];spinTime=0;invincibleTime=0;player.rotation=0;$("score").textContent="0";$("lives").textContent="2";$("startPanel").style.display="none";$("gameOver").style.display="none";setLane(1,true);running=true;lastTime=performance.now();requestAnimationFrame(loop)}
-  function endGame(){running=false;best=Math.max(best,score);localStorage.setItem("aoRacingBest",String(best));$("best").textContent=String(best);$("finalScore").textContent=String(score);$("gameOver").style.display="flex"}
-  function moveLane(dir,e){if(e){e.preventDefault();e.stopPropagation()}if(!running||spinTime>0)return;setLane(currentLane+dir)}
-  $("leftBtn").addEventListener("pointerdown",e=>moveLane(-1,e));$("rightBtn").addEventListener("pointerdown",e=>moveLane(1,e));$("startBtn").addEventListener("click",startGame);$("retryBtn").addEventListener("click",startGame);
-  window.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")moveLane(-1,e);if(e.key==="ArrowRight")moveLane(1,e)});
-  function spawnObstacle(){const road=roadBounds(),lw=laneWidth(),lane=Math.floor(Math.random()*3),kind=Math.random()<.78?"barrier":"star",width=kind==="barrier"?56:44,height=kind==="barrier"?54:50;obstacles.push({x:road.left+lane*lw+lw/2-width/2,y:-80,width,height,kind,passed:false,collected:false,hit:false})}
-  function overlaps(a,b){const aa={x:a.x+14,y:a.y+14,width:a.width-28,height:a.height-24},bb={x:b.x+6,y:b.y+6,width:b.width-12,height:b.height-12};return aa.x<bb.x+bb.width&&aa.x+aa.width>bb.x&&aa.y<bb.y+bb.height&&aa.y+aa.height>bb.y}
-  function addSparkles(){for(let i=0;i<12;i++)sparkles.push({x:player.x+player.width/2,y:player.y+20,vx:(Math.random()-.5)*190,vy:-Math.random()*190,life:.75})}
-  function crash(){lives--;$("lives").textContent=String(lives);if(navigator.vibrate)navigator.vibrate([90,50,90]);if(lives<=0){endGame();return}spinTime=1.15;invincibleTime=2;player.rotation=0}
-  function update(dt){roadOffset=(roadOffset+speed*dt)%80;if(spinTime>0){spinTime=Math.max(0,spinTime-dt);player.rotation+=(Math.PI*4/1.15)*dt;if(spinTime===0)player.rotation=0}else{const diff=player.targetX-player.x;player.x+=diff*Math.min(1,dt*13);if(Math.abs(diff)<.5)player.x=player.targetX}invincibleTime=Math.max(0,invincibleTime-dt);spawnTimer-=dt;if(spawnTimer<=0){spawnObstacle();spawnTimer=Math.max(.75,1.14-score*.009)}for(const o of obstacles){o.y+=speed*dt;if(o.kind==="barrier"&&!o.hit&&invincibleTime<=0&&overlaps(player,o)){o.hit=true;crash();if(!running)return}if(o.kind==="star"&&!o.collected&&overlaps(player,o)){o.collected=true;score+=3;addSparkles()}if(!o.passed&&o.y>player.y+player.height){o.passed=true;if(o.kind==="barrier"&&!o.hit)score++}}obstacles=obstacles.filter(o=>!o.collected&&o.y<H+110);for(const s of sparkles){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=270*dt;s.life-=dt}sparkles=sparkles.filter(s=>s.life>0);speed=Math.min(400,250+score*3.5);$("score").textContent=String(score)}
-  function drawBackground(){const road=roadBounds();ctx.globalAlpha=1;ctx.fillStyle="#87ceeb";ctx.fillRect(0,0,W,H*.18);ctx.fillStyle="#58bd47";ctx.fillRect(0,H*.18,W,H*.82);ctx.font="42px system-ui";ctx.fillText("☁️",18,100);ctx.fillText("☁️",W-90,145);ctx.fillStyle="#444";ctx.fillRect(road.left,0,road.width,H);ctx.fillStyle="#f4f4f4";ctx.fillRect(road.left,0,7,H);ctx.fillRect(road.right-7,0,7,H);ctx.fillStyle="#fff7a8";const l1=road.left+road.width/3,l2=road.left+road.width*2/3;for(let y=-80+roadOffset;y<H;y+=80){ctx.fillRect(l1-3,y,6,38);ctx.fillRect(l2-3,y,6,38)}ctx.font="34px system-ui";for(let y=170-roadOffset*.45;y<H;y+=150){ctx.fillText("🌳",Math.max(8,road.left-58),y);ctx.fillText("🌼",Math.min(W-42,road.right+15),y+55)}}
-  function drawBarrier(o){ctx.save();const{x,y,width:w,height:h}=o;ctx.fillStyle="#555";ctx.fillRect(x+7,y+h-10,7,13);ctx.fillRect(x+w-14,y+h-10,7,13);ctx.fillStyle="#ffcc00";ctx.fillRect(x,y+12,w,25);ctx.fillStyle="#202020";for(let sx=x-8;sx<x+w;sx+=18){ctx.beginPath();ctx.moveTo(sx,y+37);ctx.lineTo(sx+11,y+12);ctx.lineTo(sx+20,y+12);ctx.lineTo(sx+9,y+37);ctx.closePath();ctx.fill()}ctx.fillStyle="#ff7a00";ctx.beginPath();ctx.arc(x+10,y+7,5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+w-10,y+7,5,0,Math.PI*2);ctx.fill();ctx.restore()}
-  function drawStar(o){ctx.save();ctx.font="46px system-ui";ctx.fillText("⭐",o.x,o.y+43);ctx.restore()}
-  function drawShield(cx,cy,scale=1){ctx.save();ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.fillStyle="#123b8d";ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(11,-7);ctx.lineTo(8,8);ctx.lineTo(0,15);ctx.lineTo(-8,8);ctx.lineTo(-11,-7);ctx.closePath();ctx.fill();ctx.fillStyle="#ffd928";ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(7,-4);ctx.lineTo(5,6);ctx.lineTo(0,10);ctx.lineTo(-5,6);ctx.lineTo(-7,-4);ctx.closePath();ctx.fill();ctx.fillStyle="#123b8d";ctx.beginPath();for(let i=0;i<5;i++){const a=-Math.PI/2+i*Math.PI*2/5,b=a+Math.PI/5,ro=4.5,ri=2;if(i===0)ctx.moveTo(Math.cos(a)*ro,Math.sin(a)*ro);else ctx.lineTo(Math.cos(a)*ro,Math.sin(a)*ro);ctx.lineTo(Math.cos(b)*ri,Math.sin(b)*ri)}ctx.closePath();ctx.fill();ctx.restore()}
-  function drawPlayerCar(){ctx.save();ctx.globalAlpha=invincibleTime>0&&Math.floor(invincibleTime*10)%2===0?.45:1;const x=player.x,y=player.y,w=player.width,h=player.height;ctx.translate(x+w/2,y+h/2);ctx.rotate(player.rotation);ctx.translate(-w/2,-h/2);ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.ellipse(w/2,h-2,w*.43,11,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#171717";ctx.fillRect(1,24,15,28);ctx.fillRect(w-16,24,15,28);ctx.fillRect(3,h-37,16,29);ctx.fillRect(w-19,h-37,16,29);ctx.fillStyle="#aeb8c6";[[9,38],[w-9,38],[11,h-22],[w-11,h-22]].forEach(([cx,cy])=>{ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fill()});const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,"#38a0ff");g.addColorStop(.46,"#0866df");g.addColorStop(1,"#07378c");ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(17,8);ctx.lineTo(w-17,8);ctx.quadraticCurveTo(w-5,10,w-4,26);ctx.lineTo(w-3,h-20);ctx.quadraticCurveTo(w-5,h-6,w-19,h-5);ctx.lineTo(19,h-5);ctx.quadraticCurveTo(5,h-6,3,h-20);ctx.lineTo(4,26);ctx.quadraticCurveTo(5,10,17,8);ctx.closePath();ctx.fill();ctx.fillStyle="#151b25";ctx.beginPath();ctx.moveTo(18,19);ctx.lineTo(w-18,19);ctx.lineTo(w-23,49);ctx.lineTo(23,49);ctx.closePath();ctx.fill();ctx.fillStyle="#9bdcff";ctx.beginPath();ctx.moveTo(24,24);ctx.lineTo(w-24,24);ctx.lineTo(w-29,45);ctx.lineTo(29,45);ctx.closePath();ctx.fill();ctx.fillStyle="#e33b35";ctx.fillRect(w/2-15,8,13,10);ctx.fillStyle="#237dff";ctx.fillRect(w/2+2,8,13,10);ctx.fillStyle="rgba(255,255,255,.7)";ctx.fillRect(w/2-13,9,4,3);ctx.fillRect(w/2+4,9,4,3);ctx.fillStyle="#fff";ctx.fillRect(15,53,w-30,10);ctx.fillStyle="#ffe02d";ctx.fillRect(17,65,w-34,5);drawShield(w-17,58,.85);ctx.fillStyle="#20242b";ctx.fillRect(11,h-16,w-22,11);ctx.fillStyle="#c5ccd5";ctx.fillRect(w/2-11,h-22,22,6);ctx.fillStyle="#fff5a5";ctx.fillRect(10,h-28,11,7);ctx.fillRect(w-21,h-28,11,7);ctx.fillStyle="#0d4fae";ctx.beginPath();ctx.moveTo(21,18);ctx.lineTo(15,5);ctx.lineTo(29,17);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(w-21,18);ctx.lineTo(w-15,5);ctx.lineTo(w-29,17);ctx.closePath();ctx.fill();ctx.strokeStyle="rgba(255,255,255,.72)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(20,15);ctx.lineTo(w-20,15);ctx.stroke();ctx.restore();ctx.globalAlpha=1}
-  function drawSparkles(){ctx.save();ctx.font="22px system-ui";for(const s of sparkles){ctx.globalAlpha=Math.max(0,s.life/.75);ctx.fillText("✨",s.x,s.y)}ctx.restore();ctx.globalAlpha=1}
-  function draw(){if(!W||!H)return;ctx.clearRect(0,0,W,H);drawBackground();for(const o of obstacles){if(o.kind==="barrier")drawBarrier(o);else drawStar(o)}drawPlayerCar();drawSparkles();ctx.globalAlpha=1}
-  function loop(now){if(!running){draw();return}const dt=Math.min(.035,(now-lastTime)/1000);lastTime=now;update(dt);draw();if(running)requestAnimationFrame(loop)}
-  window.addEventListener("resize",resize);window.addEventListener("orientationchange",()=>setTimeout(resize,200));resize();
+
+  const $ = id => document.getElementById(id);
+
+  const canvas = $("game");
+  const ctx = canvas.getContext("2d");
+  const wrap = $("gameWrap");
+
+  let W = 0;
+  let H = 0;
+  let dpr = 1;
+
+  let running = false;
+  let paused = false;
+  let lastTime = 0;
+
+  let score = 0;
+  let starsCollected = 0;
+  let rescuedCount = 0;
+  let elapsedTime = 0;
+  let lives = 2;
+
+  let best = Number(localStorage.getItem("aoRacingBest") || 0);
+
+  let roadOffset = 0;
+  let spawnTimer = 0;
+  let speed = 220;
+
+  let obstacles = [];
+  let particles = [];
+
+  let currentLane = 1;
+  let spinTime = 0;
+  let invincibleTime = 0;
+  let backgroundStage = 0;
+  let gameClock = 0;
+
+  let selectedVehicle = "police";
+  let selectedDifficulty = "easy";
+  let selectedMission = "time";
+
+  let soundEnabled = true;
+  let audioContext = null;
+
+  let pointerStartX = null;
+  let pointerStartY = null;
+
+  const player = {
+    x: 0,
+    y: 0,
+    width: 76,
+    height: 104,
+    targetX: 0,
+    rotation: 0
+  };
+
+  const difficultySettings = {
+    easy: {
+      baseSpeed: 205,
+      maxSpeed: 320,
+      spawnBase: 1.42,
+      spawnMinimum: .95,
+      warningDistance: 310
+    },
+    normal: {
+      baseSpeed: 250,
+      maxSpeed: 400,
+      spawnBase: 1.13,
+      spawnMinimum: .72,
+      warningDistance: 270
+    },
+    fast: {
+      baseSpeed: 295,
+      maxSpeed: 480,
+      spawnBase: .94,
+      spawnMinimum: .58,
+      warningDistance: 235
+    }
+  };
+
+  const sceneryNames = [
+    "まちを パトロール",
+    "トンネルを すすもう",
+    "はしを わたろう",
+    "よるの パトロール"
+  ];
+
+  $("best").textContent = String(best);
+
+  function setupOptionButtons(containerId, onSelect) {
+    const container = $(containerId);
+
+    container.addEventListener("click", event => {
+      const button = event.target.closest(".optionButton");
+      if (!button) return;
+
+      for (const item of container.querySelectorAll(".optionButton")) {
+        item.classList.remove("selected");
+      }
+
+      button.classList.add("selected");
+      onSelect(button.dataset.value);
+      playTone(420, .06, "sine", .055);
+      vibrate(18);
+    });
+  }
+
+  setupOptionButtons("vehicleOptions", value => {
+    selectedVehicle = value;
+  });
+
+  setupOptionButtons("difficultyOptions", value => {
+    selectedDifficulty = value;
+  });
+
+  setupOptionButtons("missionOptions", value => {
+    selectedMission = value;
+  });
+
+  function ensureAudio() {
+    if (!audioContext) {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtor) {
+        audioContext = new AudioCtor();
+      }
+    }
+
+    if (audioContext && audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+  }
+
+  function playTone(frequency, duration, type = "sine", volume = .07, delay = 0) {
+    if (!soundEnabled) return;
+
+    ensureAudio();
+    if (!audioContext) return;
+
+    const start = audioContext.currentTime + delay;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + .015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start(start);
+    oscillator.stop(start + duration + .02);
+  }
+
+  function playStartSound() {
+    playTone(440, .12, "sine", .07, 0);
+    playTone(620, .12, "sine", .07, .11);
+    playTone(820, .16, "sine", .08, .22);
+  }
+
+  function playMoveSound() {
+    playTone(360, .045, "square", .025);
+  }
+
+  function playWarningSound() {
+    playTone(760, .09, "square", .04, 0);
+    playTone(760, .09, "square", .04, .13);
+  }
+
+  function playStarSound() {
+    playTone(700, .09, "sine", .06, 0);
+    playTone(950, .13, "sine", .07, .08);
+  }
+
+  function playRescueSound() {
+    playTone(520, .1, "triangle", .06, 0);
+    playTone(680, .1, "triangle", .06, .09);
+    playTone(900, .15, "triangle", .07, .18);
+  }
+
+  function playCrashSound() {
+    playTone(180, .18, "sawtooth", .05, 0);
+    playTone(120, .22, "sawtooth", .045, .11);
+  }
+
+  function playSuccessSound() {
+    playTone(523, .14, "sine", .07, 0);
+    playTone(659, .14, "sine", .07, .13);
+    playTone(784, .14, "sine", .07, .26);
+    playTone(1046, .28, "sine", .08, .39);
+  }
+
+  function vibrate(pattern) {
+    if (navigator.vibrate) {
+      navigator.vibrate(pattern);
+    }
+  }
+
+  function roadBounds() {
+    const roadWidth = Math.min(W * .72, 360);
+
+    return {
+      left: (W - roadWidth) / 2,
+      right: (W + roadWidth) / 2,
+      width: roadWidth
+    };
+  }
+
+  function laneWidth() {
+    return roadBounds().width / 3;
+  }
+
+  function laneCenter(index) {
+    const road = roadBounds();
+    const width = laneWidth();
+
+    return road.left + width * index + width / 2;
+  }
+
+  function playerXForLane(index) {
+    return laneCenter(index) - player.width / 2;
+  }
+
+  function setLane(index, snap = false) {
+    currentLane = Math.max(0, Math.min(2, index));
+    player.targetX = playerXForLane(currentLane);
+
+    if (snap) {
+      player.x = player.targetX;
+    }
+  }
+
+  function resize() {
+    const rect = wrap.getBoundingClientRect();
+
+    W = rect.width;
+    H = rect.height;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = Math.max(1, Math.floor(W * dpr));
+    canvas.height = Math.max(1, Math.floor(H * dpr));
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    player.y = H - 218;
+    setLane(currentLane, true);
+
+    draw();
+  }
+
+  function missionLabel() {
+    if (selectedMission === "time") {
+      const remaining = Math.max(0, Math.ceil(30 - elapsedTime));
+      return `⏱️ あと ${remaining}びょう　${sceneryNames[backgroundStage]}`;
+    }
+
+    if (selectedMission === "stars") {
+      return `⭐ ほし ${starsCollected}/5　${sceneryNames[backgroundStage]}`;
+    }
+
+    return `🐶 たすけた ${rescuedCount}/3　${sceneryNames[backgroundStage]}`;
+  }
+
+  function updateHud() {
+    $("score").textContent = String(score);
+    $("best").textContent = String(best);
+
+    const visibleStars = Math.min(starsCollected, 5);
+    let trail = "⭐".repeat(visibleStars);
+
+    if (starsCollected === 0) {
+      trail = "☆☆☆☆☆";
+    } else if (starsCollected > 5) {
+      trail = "⭐⭐⭐⭐⭐+" + String(starsCollected - 5);
+    } else {
+      trail += "☆".repeat(5 - visibleStars);
+    }
+
+    $("starTrail").textContent = trail;
+    $("livesBadge").textContent = "💙".repeat(Math.max(0, lives));
+    $("missionBar").textContent = missionLabel();
+  }
+
+  function resetGameState() {
+    score = 0;
+    starsCollected = 0;
+    rescuedCount = 0;
+    elapsedTime = 0;
+    lives = 2;
+
+    roadOffset = 0;
+    spawnTimer = 1.5;
+    obstacles = [];
+    particles = [];
+
+    spinTime = 0;
+    invincibleTime = 0;
+    player.rotation = 0;
+
+    backgroundStage = 0;
+    gameClock = 0;
+
+    const settings = difficultySettings[selectedDifficulty];
+    speed = settings.baseSpeed;
+
+    setLane(1, true);
+    updateHud();
+  }
+
+  function startGame(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    ensureAudio();
+    resetGameState();
+
+    $("startPanel").style.display = "none";
+    $("gameOver").style.display = "none";
+    $("missionComplete").style.display = "none";
+    $("pausePanel").style.display = "none";
+
+    paused = false;
+    running = true;
+    lastTime = performance.now();
+
+    playStartSound();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function stopAndShowStart() {
+    running = false;
+    paused = false;
+    $("gameOver").style.display = "none";
+    $("missionComplete").style.display = "none";
+    $("pausePanel").style.display = "none";
+    $("startPanel").style.display = "flex";
+  }
+
+  function togglePause(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!running) return;
+
+    paused = !paused;
+    $("pausePanel").style.display = paused ? "flex" : "none";
+
+    if (!paused) {
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function resumeGame(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!running) return;
+
+    paused = false;
+    $("pausePanel").style.display = "none";
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+  }
+
+  function moveLane(direction, event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!running || paused || spinTime > 0) return;
+
+    setLane(currentLane + direction);
+    playMoveSound();
+    vibrate(14);
+  }
+
+  function toggleSound(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    soundEnabled = !soundEnabled;
+    $("soundBtn").textContent = soundEnabled ? "🔊" : "🔇";
+
+    if (soundEnabled) {
+      ensureAudio();
+      playTone(620, .08, "sine", .055);
+    }
+  }
+
+  $("leftBtn").addEventListener("pointerdown", event => {
+    moveLane(-1, event);
+  });
+
+  $("rightBtn").addEventListener("pointerdown", event => {
+    moveLane(1, event);
+  });
+
+  $("startBtn").addEventListener("click", startGame);
+  $("retryBtn").addEventListener("click", stopAndShowStart);
+  $("completeRetryBtn").addEventListener("click", stopAndShowStart);
+  $("pauseBtn").addEventListener("click", togglePause);
+  $("resumeBtn").addEventListener("click", resumeGame);
+  $("soundBtn").addEventListener("click", toggleSound);
+
+  window.addEventListener("keydown", event => {
+    if (event.key === "ArrowLeft") {
+      moveLane(-1, event);
+    }
+
+    if (event.key === "ArrowRight") {
+      moveLane(1, event);
+    }
+
+    if (event.key === " ") {
+      togglePause(event);
+    }
+  });
+
+  wrap.addEventListener("pointerdown", event => {
+    if (event.target.closest("button")) return;
+    if (!running || paused) return;
+
+    pointerStartX = event.clientX;
+    pointerStartY = event.clientY;
+  });
+
+  wrap.addEventListener("pointerup", event => {
+    if (pointerStartX === null || pointerStartY === null) return;
+
+    const dx = event.clientX - pointerStartX;
+    const dy = event.clientY - pointerStartY;
+
+    pointerStartX = null;
+    pointerStartY = null;
+
+    if (Math.abs(dx) < 38 || Math.abs(dx) < Math.abs(dy)) return;
+
+    moveLane(dx > 0 ? 1 : -1, event);
+  });
+
+  function chooseSpawnKind() {
+    const random = Math.random();
+
+    if (selectedMission === "rescue") {
+      if (random < .54) return "danger";
+      if (random < .73) return "star";
+      return "rescue";
+    }
+
+    if (selectedMission === "stars") {
+      if (random < .58) return "danger";
+      if (random < .91) return "star";
+      return "rescue";
+    }
+
+    if (random < .65) return "danger";
+    if (random < .87) return "star";
+    return "rescue";
+  }
+
+  function chooseDangerType() {
+    const value = Math.random();
+
+    if (value < .45) return "barrier";
+    if (value < .75) return "cone";
+    return "puddle";
+  }
+
+  function spawnObject() {
+    const road = roadBounds();
+    const width = laneWidth();
+    const lane = Math.floor(Math.random() * 3);
+
+    const group = chooseSpawnKind();
+    let kind = group;
+
+    if (group === "danger") {
+      kind = chooseDangerType();
+    }
+
+    const sizes = {
+      barrier: [58, 55],
+      cone: [43, 52],
+      puddle: [64, 34],
+      star: [44, 48],
+      rescue: [51, 56]
+    };
+
+    const [objectWidth, objectHeight] = sizes[kind];
+
+    obstacles.push({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+      lane,
+      x: road.left + lane * width + width / 2 - objectWidth / 2,
+      y: -90,
+      width: objectWidth,
+      height: objectHeight,
+      kind,
+      passed: false,
+      removed: false,
+      hit: false,
+      warned: false
+    });
+  }
+
+  function isDanger(object) {
+    return object.kind === "barrier" ||
+           object.kind === "cone" ||
+           object.kind === "puddle";
+  }
+
+  function overlaps(playerObject, object) {
+    const playerBox = {
+      x: playerObject.x + 14,
+      y: playerObject.y + 15,
+      width: playerObject.width - 28,
+      height: playerObject.height - 26
+    };
+
+    const objectBox = {
+      x: object.x + 6,
+      y: object.y + 5,
+      width: object.width - 12,
+      height: object.height - 10
+    };
+
+    return (
+      playerBox.x < objectBox.x + objectBox.width &&
+      playerBox.x + playerBox.width > objectBox.x &&
+      playerBox.y < objectBox.y + objectBox.height &&
+      playerBox.y + playerBox.height > objectBox.y
+    );
+  }
+
+  function addParticles(symbol, count, spread = 190) {
+    for (let index = 0; index < count; index += 1) {
+      particles.push({
+        symbol,
+        x: player.x + player.width / 2,
+        y: player.y + 20,
+        velocityX: (Math.random() - .5) * spread,
+        velocityY: -Math.random() * spread,
+        life: .85
+      });
+    }
+  }
+
+  function crash(object) {
+    object.hit = true;
+    object.removed = true;
+
+    lives -= 1;
+    updateHud();
+
+    playCrashSound();
+    vibrate([90, 50, 90]);
+
+    if (lives <= 0) {
+      endGame();
+      return;
+    }
+
+    spinTime = 1.2;
+    invincibleTime = 2.2;
+    player.rotation = 0;
+    addParticles("💫", 10, 160);
+  }
+
+  function collectStar(object) {
+    object.removed = true;
+
+    starsCollected += 1;
+    score += 3;
+
+    playStarSound();
+    vibrate(18);
+    addParticles("✨", 12, 200);
+
+    updateHud();
+    checkMissionComplete();
+  }
+
+  function rescueFriend(object) {
+    object.removed = true;
+
+    rescuedCount += 1;
+    score += 4;
+
+    playRescueSound();
+    vibrate([20, 25, 20]);
+    addParticles("💙", 10, 180);
+
+    updateHud();
+    checkMissionComplete();
+  }
+
+  function checkMissionComplete() {
+    if (!running) return;
+
+    let complete = false;
+    let message = "";
+
+    if (selectedMission === "time" && elapsedTime >= 30) {
+      complete = true;
+      message = "30びょう パトロールできたよ！";
+    }
+
+    if (selectedMission === "stars" && starsCollected >= 5) {
+      complete = true;
+      message = "ほしを 5こ あつめたよ！";
+    }
+
+    if (selectedMission === "rescue" && rescuedCount >= 3) {
+      complete = true;
+      message = "3にん たすけられたよ！";
+    }
+
+    if (!complete) return;
+
+    running = false;
+    paused = false;
+
+    best = Math.max(best, score);
+    localStorage.setItem("aoRacingBest", String(best));
+    $("best").textContent = String(best);
+
+    $("completeMessage").textContent = message;
+    $("completeStars").textContent = resultStarString();
+    $("missionComplete").style.display = "flex";
+
+    playSuccessSound();
+    vibrate([80, 50, 80, 50, 160]);
+  }
+
+  function resultStarString() {
+    const count = Math.max(1, Math.min(10, Math.ceil(score / 3)));
+    return "⭐".repeat(count);
+  }
+
+  function endGame() {
+    running = false;
+    paused = false;
+
+    best = Math.max(best, score);
+    localStorage.setItem("aoRacingBest", String(best));
+
+    $("best").textContent = String(best);
+    $("finalScore").textContent = String(score);
+    $("finalStars").textContent = resultStarString();
+    $("gameOver").style.display = "flex";
+  }
+
+  function updateWarning() {
+    const settings = difficultySettings[selectedDifficulty];
+    let dangerNear = false;
+
+    for (const object of obstacles) {
+      if (!isDanger(object) || object.removed) continue;
+      if (object.lane !== currentLane) continue;
+
+      const distance = player.y - (object.y + object.height);
+
+      if (distance > 75 && distance < settings.warningDistance) {
+        dangerNear = true;
+
+        if (!object.warned) {
+          object.warned = true;
+          playWarningSound();
+        }
+      }
+    }
+
+    $("warningText").style.display = dangerNear ? "block" : "none";
+  }
+
+  function update(deltaTime) {
+    const settings = difficultySettings[selectedDifficulty];
+
+    gameClock += deltaTime;
+    elapsedTime += deltaTime;
+    backgroundStage = Math.floor(gameClock / 12) % 4;
+
+    roadOffset = (roadOffset + speed * deltaTime) % 80;
+
+    if (spinTime > 0) {
+      spinTime = Math.max(0, spinTime - deltaTime);
+      player.rotation += (Math.PI * 4 / 1.2) * deltaTime;
+
+      if (spinTime === 0) {
+        player.rotation = 0;
+      }
+    } else {
+      const distance = player.targetX - player.x;
+      player.x += distance * Math.min(1, deltaTime * 13);
+
+      if (Math.abs(distance) < .5) {
+        player.x = player.targetX;
+      }
+    }
+
+    invincibleTime = Math.max(0, invincibleTime - deltaTime);
+
+    spawnTimer -= deltaTime;
+
+    if (spawnTimer <= 0) {
+      spawnObject();
+
+      spawnTimer = Math.max(
+        settings.spawnMinimum,
+        settings.spawnBase - score * .006
+      );
+    }
+
+    for (const object of obstacles) {
+      object.y += speed * deltaTime;
+
+      if (
+        isDanger(object) &&
+        !object.hit &&
+        !object.removed &&
+        invincibleTime <= 0 &&
+        overlaps(player, object)
+      ) {
+        crash(object);
+
+        if (!running) {
+          return;
+        }
+      }
+
+      if (
+        object.kind === "star" &&
+        !object.removed &&
+        overlaps(player, object)
+      ) {
+        collectStar(object);
+
+        if (!running) {
+          return;
+        }
+      }
+
+      if (
+        object.kind === "rescue" &&
+        !object.removed &&
+        overlaps(player, object)
+      ) {
+        rescueFriend(object);
+
+        if (!running) {
+          return;
+        }
+      }
+
+      if (
+        !object.passed &&
+        object.y > player.y + player.height
+      ) {
+        object.passed = true;
+
+        if (isDanger(object) && !object.hit) {
+          score += 1;
+        }
+      }
+    }
+
+    /*
+     * 取得した星や救助対象はremoved=trueにして、
+     * この場所で即座に配列から削除します。
+     * 同じ星が何度も加算される不具合を防ぎます。
+     */
+    obstacles = obstacles.filter(object => {
+      return !object.removed && object.y < H + 120;
+    });
+
+    for (const particle of particles) {
+      particle.x += particle.velocityX * deltaTime;
+      particle.y += particle.velocityY * deltaTime;
+      particle.velocityY += 280 * deltaTime;
+      particle.life -= deltaTime;
+    }
+
+    particles = particles.filter(particle => particle.life > 0);
+
+    speed = Math.min(
+      settings.maxSpeed,
+      settings.baseSpeed + score * 3.2
+    );
+
+    updateWarning();
+    updateHud();
+    checkMissionComplete();
+  }
+
+  function drawSkyAndGround() {
+    if (backgroundStage === 3) {
+      const nightGradient = ctx.createLinearGradient(0, 0, 0, H);
+      nightGradient.addColorStop(0, "#14224f");
+      nightGradient.addColorStop(1, "#334d79");
+      ctx.fillStyle = nightGradient;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.font = "25px system-ui";
+      ctx.fillText("⭐", 20, 105);
+      ctx.fillText("⭐", W - 55, 145);
+      ctx.fillText("🌙", W - 105, 95);
+
+      ctx.fillStyle = "#274a28";
+      ctx.fillRect(0, H * .18, W, H * .82);
+      return;
+    }
+
+    if (backgroundStage === 1) {
+      ctx.fillStyle = "#6d747d";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#9299a2";
+      ctx.fillRect(0, 0, W, H * .18);
+      return;
+    }
+
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, H * .4);
+    skyGradient.addColorStop(0, "#75cdf1");
+    skyGradient.addColorStop(1, "#b9edff");
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = backgroundStage === 2 ? "#4e9fd0" : "#58bd47";
+    ctx.fillRect(0, H * .18, W, H * .82);
+
+    ctx.font = "42px system-ui";
+    ctx.fillText("☁️", 18, 100);
+    ctx.fillText("☁️", W - 90, 145);
+  }
+
+  function drawScenery(road) {
+    ctx.font = "33px system-ui";
+
+    for (let y = 170 - roadOffset * .45; y < H; y += 150) {
+      if (backgroundStage === 0) {
+        ctx.fillText("🏠", Math.max(4, road.left - 62), y);
+        ctx.fillText("🌳", Math.min(W - 40, road.right + 14), y + 56);
+      }
+
+      if (backgroundStage === 1) {
+        ctx.fillText("💡", Math.max(7, road.left - 52), y);
+        ctx.fillText("💡", Math.min(W - 40, road.right + 15), y + 50);
+      }
+
+      if (backgroundStage === 2) {
+        ctx.fillText("🌊", Math.max(4, road.left - 65), y);
+        ctx.fillText("🌊", Math.min(W - 47, road.right + 11), y + 55);
+      }
+
+      if (backgroundStage === 3) {
+        ctx.fillText("🏙️", Math.max(1, road.left - 69), y);
+        ctx.fillText("💡", Math.min(W - 40, road.right + 15), y + 55);
+      }
+    }
+  }
+
+  function drawBackground() {
+    const road = roadBounds();
+
+    ctx.globalAlpha = 1;
+    drawSkyAndGround();
+
+    if (backgroundStage === 2) {
+      ctx.fillStyle = "#d2d8dc";
+      ctx.fillRect(road.left - 14, 0, road.width + 28, H);
+    }
+
+    ctx.fillStyle = backgroundStage === 1 ? "#353940" : "#444";
+    ctx.fillRect(road.left, 0, road.width, H);
+
+    ctx.fillStyle = "#f4f4f4";
+    ctx.fillRect(road.left, 0, 7, H);
+    ctx.fillRect(road.right - 7, 0, 7, H);
+
+    ctx.fillStyle = backgroundStage === 3 ? "#f6d74f" : "#fff7a8";
+
+    const firstLine = road.left + road.width / 3;
+    const secondLine = road.left + road.width * 2 / 3;
+
+    for (let y = -80 + roadOffset; y < H; y += 80) {
+      ctx.fillRect(firstLine - 3, y, 6, 38);
+      ctx.fillRect(secondLine - 3, y, 6, 38);
+    }
+
+    drawScenery(road);
+  }
+
+  function drawBarrier(object) {
+    ctx.save();
+
+    const { x, y, width, height } = object;
+
+    ctx.fillStyle = "#555";
+    ctx.fillRect(x + 7, y + height - 10, 7, 13);
+    ctx.fillRect(x + width - 14, y + height - 10, 7, 13);
+
+    ctx.fillStyle = "#ffcc00";
+    ctx.fillRect(x, y + 12, width, 25);
+
+    ctx.fillStyle = "#202020";
+
+    for (let stripeX = x - 8; stripeX < x + width; stripeX += 18) {
+      ctx.beginPath();
+      ctx.moveTo(stripeX, y + 37);
+      ctx.lineTo(stripeX + 11, y + 12);
+      ctx.lineTo(stripeX + 20, y + 12);
+      ctx.lineTo(stripeX + 9, y + 37);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#ff7a00";
+    ctx.beginPath();
+    ctx.arc(x + 10, y + 7, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x + width - 10, y + 7, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawCone(object) {
+    ctx.save();
+
+    const { x, y, width, height } = object;
+
+    ctx.fillStyle = "#31353b";
+    ctx.fillRect(x + 3, y + height - 8, width - 6, 8);
+
+    ctx.fillStyle = "#ff7a00";
+    ctx.beginPath();
+    ctx.moveTo(x + width / 2, y);
+    ctx.lineTo(x + width - 6, y + height - 8);
+    ctx.lineTo(x + 6, y + height - 8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(x + 13, y + 27);
+    ctx.lineTo(x + width - 13, y + 27);
+    ctx.lineTo(x + width - 10, y + 35);
+    ctx.lineTo(x + 10, y + 35);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawPuddle(object) {
+    ctx.save();
+
+    ctx.fillStyle = "#378fcf";
+    ctx.beginPath();
+    ctx.ellipse(
+      object.x + object.width / 2,
+      object.y + object.height / 2,
+      object.width / 2,
+      object.height / 2,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,.55)";
+    ctx.beginPath();
+    ctx.ellipse(
+      object.x + object.width * .38,
+      object.y + object.height * .38,
+      object.width * .16,
+      object.height * .11,
+      -.25,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawStar(object) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.font = "46px system-ui";
+    ctx.fillText("⭐", object.x, object.y + 43);
+    ctx.restore();
+  }
+
+  function drawRescue(object) {
+    ctx.save();
+    ctx.globalAlpha = 1;
+
+    const options = ["🐶", "🚗", "🚒"];
+    const symbol = options[Math.abs(object.lane + Math.floor(object.y / 100)) % options.length];
+
+    ctx.font = "47px system-ui";
+    ctx.fillText(symbol, object.x, object.y + 45);
+
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#1676e8";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(object.x + object.width - 4, object.y + 5, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#1676e8";
+    ctx.font = "bold 17px system-ui";
+    ctx.fillText("!", object.x + object.width - 8, object.y + 11);
+
+    ctx.restore();
+  }
+
+  function drawShield(context, centerX, centerY, scale = 1) {
+    context.save();
+    context.translate(centerX, centerY);
+    context.scale(scale, scale);
+
+    context.fillStyle = "#123b8d";
+    context.beginPath();
+    context.moveTo(0, -12);
+    context.lineTo(11, -7);
+    context.lineTo(8, 8);
+    context.lineTo(0, 15);
+    context.lineTo(-8, 8);
+    context.lineTo(-11, -7);
+    context.closePath();
+    context.fill();
+
+    context.fillStyle = "#ffd928";
+    context.beginPath();
+    context.moveTo(0, -8);
+    context.lineTo(7, -4);
+    context.lineTo(5, 6);
+    context.lineTo(0, 10);
+    context.lineTo(-5, 6);
+    context.lineTo(-7, -4);
+    context.closePath();
+    context.fill();
+
+    context.fillStyle = "#123b8d";
+    context.beginPath();
+
+    for (let index = 0; index < 5; index += 1) {
+      const outerAngle = -Math.PI / 2 + index * Math.PI * 2 / 5;
+      const innerAngle = outerAngle + Math.PI / 5;
+      const outerRadius = 4.5;
+      const innerRadius = 2;
+
+      if (index === 0) {
+        context.moveTo(
+          Math.cos(outerAngle) * outerRadius,
+          Math.sin(outerAngle) * outerRadius
+        );
+      } else {
+        context.lineTo(
+          Math.cos(outerAngle) * outerRadius,
+          Math.sin(outerAngle) * outerRadius
+        );
+      }
+
+      context.lineTo(
+        Math.cos(innerAngle) * innerRadius,
+        Math.sin(innerAngle) * innerRadius
+      );
+    }
+
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
+  function drawWheels(context, width, height) {
+    context.fillStyle = "#171717";
+    context.fillRect(1, 24, 15, 28);
+    context.fillRect(width - 16, 24, 15, 28);
+    context.fillRect(3, height - 37, 16, 29);
+    context.fillRect(width - 19, height - 37, 16, 29);
+
+    context.fillStyle = "#aeb8c6";
+
+    const wheels = [
+      [9, 38],
+      [width - 9, 38],
+      [11, height - 22],
+      [width - 11, height - 22]
+    ];
+
+    for (const [x, y] of wheels) {
+      context.beginPath();
+      context.arc(x, y, 6, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  function drawPoliceVehicle(context, width, height) {
+    drawWheels(context, width, height);
+
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#39a6ff");
+    gradient.addColorStop(.45, "#0867df");
+    gradient.addColorStop(1, "#073688");
+
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.moveTo(17, 8);
+    context.lineTo(width - 17, 8);
+    context.quadraticCurveTo(width - 5, 10, width - 4, 26);
+    context.lineTo(width - 3, height - 20);
+    context.quadraticCurveTo(width - 5, height - 6, width - 19, height - 5);
+    context.lineTo(19, height - 5);
+    context.quadraticCurveTo(5, height - 6, 3, height - 20);
+    context.lineTo(4, 26);
+    context.quadraticCurveTo(5, 10, 17, 8);
+    context.closePath();
+    context.fill();
+
+    context.fillStyle = "#101722";
+    context.beginPath();
+    context.moveTo(18, 19);
+    context.lineTo(width - 18, 19);
+    context.lineTo(width - 23, 49);
+    context.lineTo(23, 49);
+    context.closePath();
+    context.fill();
+
+    context.fillStyle = "#9bdcff";
+    context.beginPath();
+    context.moveTo(24, 24);
+    context.lineTo(width - 24, 24);
+    context.lineTo(width - 29, 45);
+    context.lineTo(29, 45);
+    context.closePath();
+    context.fill();
+
+    const sirenFlash = Math.floor(gameClock * 7) % 2 === 0;
+
+    context.fillStyle = sirenFlash ? "#ffefef" : "#e43a34";
+    context.fillRect(width / 2 - 16, 7, 14, 11);
+
+    context.fillStyle = sirenFlash ? "#237dff" : "#edf5ff";
+    context.fillRect(width / 2 + 2, 7, 14, 11);
+
+    context.fillStyle = "#fff";
+    context.fillRect(14, 53, width - 28, 11);
+
+    context.fillStyle = "#ffe02d";
+    context.fillRect(16, 66, width - 32, 5);
+
+    drawShield(context, width - 18, 59, .87);
+
+    context.fillStyle = "#20242b";
+    context.fillRect(10, height - 16, width - 20, 11);
+
+    context.fillStyle = "#c5ccd5";
+    context.fillRect(width / 2 - 12, height - 22, 24, 6);
+
+    context.fillStyle = "#fff5a5";
+    context.fillRect(9, height - 29, 12, 7);
+    context.fillRect(width - 21, height - 29, 12, 7);
+
+    /*
+     * 犬耳を連想させるシルエットを加えて、
+     * 青い警察犬ビークルらしい雰囲気にしています。
+     */
+    context.fillStyle = "#0d4fae";
+    context.beginPath();
+    context.moveTo(22, 19);
+    context.lineTo(15, 3);
+    context.lineTo(30, 17);
+    context.closePath();
+    context.fill();
+
+    context.beginPath();
+    context.moveTo(width - 22, 19);
+    context.lineTo(width - 15, 3);
+    context.lineTo(width - 30, 17);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = "rgba(255,255,255,.75)";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(21, 15);
+    context.lineTo(width - 21, 15);
+    context.stroke();
+  }
+
+  function drawRescueVehicle(context, width, height) {
+    drawWheels(context, width, height);
+
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#ff755d");
+    gradient.addColorStop(.5, "#e52824");
+    gradient.addColorStop(1, "#941517");
+
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.roundRect(5, 9, width - 10, height - 14, 17);
+    context.fill();
+
+    context.fillStyle = "#262b32";
+    context.beginPath();
+    context.roundRect(18, 19, width - 36, 31, 7);
+    context.fill();
+
+    context.fillStyle = "#a9e3ff";
+    context.fillRect(24, 24, width - 48, 21);
+
+    context.fillStyle = "#fff";
+    context.fillRect(15, 55, width - 30, 12);
+
+    context.fillStyle = "#ffd529";
+    context.beginPath();
+    context.arc(width / 2, 61, 9, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#e52824";
+    context.fillRect(width / 2 - 3, 54, 6, 14);
+    context.fillRect(width / 2 - 7, 58, 14, 6);
+
+    context.fillStyle = "#23272e";
+    context.fillRect(10, height - 16, width - 20, 11);
+
+    const flash = Math.floor(gameClock * 6) % 2 === 0;
+    context.fillStyle = flash ? "#fff1f1" : "#ff3030";
+    context.fillRect(width / 2 - 13, 7, 26, 9);
+  }
+
+  function drawBuilderVehicle(context, width, height) {
+    drawWheels(context, width, height);
+
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#ffe44c");
+    gradient.addColorStop(.55, "#f1ad0b");
+    gradient.addColorStop(1, "#b46a00");
+
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.roundRect(5, 12, width - 10, height - 17, 15);
+    context.fill();
+
+    context.fillStyle = "#30343a";
+    context.beginPath();
+    context.roundRect(18, 22, width - 36, 29, 6);
+    context.fill();
+
+    context.fillStyle = "#a7ddff";
+    context.fillRect(24, 27, width - 48, 19);
+
+    context.fillStyle = "#333";
+    context.fillRect(13, 57, width - 26, 10);
+
+    context.fillStyle = "#fff";
+    context.font = "bold 15px system-ui";
+    context.fillText("A", width / 2 - 5, 66);
+
+    context.fillStyle = "#272b30";
+    context.fillRect(8, height - 17, width - 16, 12);
+
+    const flash = Math.floor(gameClock * 5) % 2 === 0;
+    context.fillStyle = flash ? "#fff7c2" : "#ff9d00";
+    context.beginPath();
+    context.arc(width / 2, 10, 7, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  function drawPlayerVehicle() {
+    ctx.save();
+
+    const blinkOff =
+      invincibleTime > 0 &&
+      Math.floor(invincibleTime * 11) % 2 === 0;
+
+    ctx.globalAlpha = blinkOff ? .42 : 1;
+
+    const x = player.x;
+    const y = player.y;
+    const width = player.width;
+    const height = player.height;
+
+    ctx.translate(x + width / 2, y + height / 2);
+    ctx.rotate(player.rotation);
+    ctx.translate(-width / 2, -height / 2);
+
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    ctx.beginPath();
+    ctx.ellipse(
+      width / 2,
+      height - 2,
+      width * .43,
+      11,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    if (selectedVehicle === "police") {
+      drawPoliceVehicle(ctx, width, height);
+    } else if (selectedVehicle === "rescue") {
+      drawRescueVehicle(ctx, width, height);
+    } else {
+      drawBuilderVehicle(ctx, width, height);
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawParticles() {
+    ctx.save();
+    ctx.font = "22px system-ui";
+
+    for (const particle of particles) {
+      ctx.globalAlpha = Math.max(0, particle.life / .85);
+      ctx.fillText(particle.symbol, particle.x, particle.y);
+    }
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    if (!W || !H) return;
+
+    ctx.clearRect(0, 0, W, H);
+
+    drawBackground();
+
+    for (const object of obstacles) {
+      if (object.kind === "barrier") {
+        drawBarrier(object);
+      } else if (object.kind === "cone") {
+        drawCone(object);
+      } else if (object.kind === "puddle") {
+        drawPuddle(object);
+      } else if (object.kind === "star") {
+        drawStar(object);
+      } else {
+        drawRescue(object);
+      }
+    }
+
+    drawPlayerVehicle();
+    drawParticles();
+
+    ctx.globalAlpha = 1;
+  }
+
+  function gameLoop(currentTime) {
+    if (!running || paused) {
+      draw();
+      return;
+    }
+
+    const deltaTime = Math.min(
+      .035,
+      (currentTime - lastTime) / 1000
+    );
+
+    lastTime = currentTime;
+
+    update(deltaTime);
+    draw();
+
+    if (running && !paused) {
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  window.addEventListener("resize", resize);
+
+  window.addEventListener("orientationchange", () => {
+    window.setTimeout(resize, 200);
+  });
+
+  resize();
 })();
 </script>
 </body>
