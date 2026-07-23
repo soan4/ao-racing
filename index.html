@@ -2,13 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
-  >
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#87ceeb">
-
   <title>あおのレーシング</title>
 
   <style>
@@ -17,18 +13,12 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family:
-        system-ui,
-        -apple-system,
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
+      font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
       background: #87ceeb;
     }
 
@@ -62,24 +52,20 @@
       left: 10px;
       right: 10px;
       z-index: 3;
-
       display: flex;
       justify-content: space-between;
       gap: 8px;
-
       pointer-events: none;
     }
 
     .badge {
-      padding: 8px 14px;
+      background: rgba(255,255,255,0.96);
       border: 3px solid white;
       border-radius: 18px;
-
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-
-      font-size: 20px;
+      padding: 8px 14px;
       font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
     #controls {
@@ -88,7 +74,6 @@
       right: 0;
       bottom: max(16px, env(safe-area-inset-bottom));
       z-index: 4;
-
       display: flex;
       justify-content: space-between;
       padding: 0 18px;
@@ -99,20 +84,17 @@
       height: 88px;
       border: 0;
       border-radius: 28px;
-
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22);
-
       font-size: 46px;
       font-weight: 900;
-
-      cursor: pointer;
+      background: rgba(255,255,255,0.96);
+      box-shadow: 0 7px 0 rgba(0,0,0,0.22);
       touch-action: manipulation;
+      cursor: pointer;
     }
 
     .control:active {
       transform: translateY(5px);
-      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.22);
     }
 
     #startPanel,
@@ -120,13 +102,11 @@
       position: absolute;
       inset: 0;
       z-index: 20;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       padding: 22px;
-      background: rgba(40, 120, 180, 0.34);
+      background: rgba(40,120,180,0.34);
     }
 
     #gameOver {
@@ -135,15 +115,12 @@
 
     .card {
       width: 100%;
-      padding: 24px 18px;
-
+      background: rgba(255,255,255,0.97);
       border: 5px solid white;
       border-radius: 34px;
-
-      background: rgba(255, 255, 255, 0.97);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-
       text-align: center;
+      padding: 24px 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.2);
     }
 
     h1 {
@@ -158,30 +135,26 @@
     }
 
     .lead {
-      margin: 10px 0 18px;
       font-size: 22px;
       font-weight: 700;
       line-height: 1.55;
+      margin: 10px 0 18px;
     }
 
     .bigBtn {
       position: relative;
       z-index: 30;
-
       width: 100%;
       min-height: 82px;
       border: 0;
       border-radius: 28px;
-
+      font-size: 30px;
+      font-weight: 900;
       color: white;
       background: #ff6b35;
       box-shadow: 0 7px 0 #b93f19;
-
-      font-size: 30px;
-      font-weight: 900;
-
-      cursor: pointer;
       touch-action: manipulation;
+      cursor: pointer;
     }
 
     .bigBtn:active {
@@ -190,92 +163,41 @@
     }
 
     .small {
-      margin-top: 14px;
       font-size: 18px;
+      margin-top: 14px;
     }
   </style>
 </head>
-
 <body>
   <div id="gameWrap">
     <canvas id="game"></canvas>
 
     <div id="hud">
-      <div class="badge">
-        ⭐ <span id="score">0</span>
-      </div>
-
-      <div class="badge">
-        🏁 <span id="best">0</span>
-      </div>
+      <div class="badge">⭐ <span id="score">0</span></div>
+      <div class="badge">🏁 <span id="best">0</span></div>
     </div>
 
     <div id="controls">
-      <button
-        class="control"
-        id="leftBtn"
-        type="button"
-        aria-label="ひだり"
-      >
-        ⬅️
-      </button>
-
-      <button
-        class="control"
-        id="rightBtn"
-        type="button"
-        aria-label="みぎ"
-      >
-        ➡️
-      </button>
+      <button class="control" id="leftBtn" type="button" aria-label="ひだり">⬅️</button>
+      <button class="control" id="rightBtn" type="button" aria-label="みぎ">➡️</button>
     </div>
 
     <div id="startPanel">
       <div class="card">
-        <div class="carHero">🏎️</div>
-
-        <h1>
-          あおの<br>
-          レーシング
-        </h1>
-
-        <div class="lead">
-          ひだり・みぎに うごいて<br>
-          コーンを よけよう！
-        </div>
-
-        <button
-          class="bigBtn"
-          id="startBtn"
-          type="button"
-        >
-          スタート！
-        </button>
-
-        <div class="small">
-          ボタンを おして あそんでね
-        </div>
+        <div class="carHero">🚓</div>
+        <h1>あおの<br>レーシング</h1>
+        <div class="lead">ひだり・みぎに うごいて<br>コーンを よけよう！</div>
+        <button class="bigBtn" id="startBtn" type="button">スタート！</button>
+        <div class="small">ボタンを おして あそんでね</div>
       </div>
     </div>
 
     <div id="gameOver">
       <div class="card">
         <div class="carHero">😄</div>
-
         <h1>もういっかい！</h1>
-
-        <div class="lead">
-          スコア：<span id="finalScore">0</span><br>
-          よくがんばったね！
-        </div>
-
-        <button
-          class="bigBtn"
-          id="retryBtn"
-          type="button"
-        >
-          もういちど
-        </button>
+        <div class="lead">スコア：<span id="finalScore">0</span><br>よくがんばったね！</div>
+        <button class="bigBtn" id="retryBtn" type="button">もういちど</button>
       </div>
     </div>
   </div>
@@ -290,249 +212,102 @@
       const ctx = canvas.getContext("2d");
       const wrap = $("gameWrap");
 
-      const scoreElement = $("score");
-      const bestElement = $("best");
-      const finalScoreElement = $("finalScore");
-
-      let width = 0;
-      let height = 0;
-      let devicePixelRatio = 1;
+      let W = 0;
+      let H = 0;
+      let dpr = 1;
 
       let running = false;
-      let lastFrameTime = 0;
-
+      let lastTime = 0;
       let score = 0;
-      let bestScore = Number(
-        localStorage.getItem("aoRacingBest") || 0
-      );
+      let best = Number(localStorage.getItem("aoRacingBest") || 0);
 
       let roadOffset = 0;
       let spawnTimer = 0;
-      let gameSpeed = 260;
-
-      let currentLane = 1;
+      let speed = 250;
 
       let obstacles = [];
       let sparkles = [];
 
+      let currentLane = 1;
+
       const player = {
         x: 0,
         y: 0,
-        width: 62,
-        height: 92,
+        width: 72,
+        height: 98,
         targetX: 0
       };
 
-      bestElement.textContent = bestScore;
+      $("best").textContent = best;
 
       function roadBounds() {
-        const roadWidth = Math.min(width * 0.72, 360);
-
+        const roadW = Math.min(W * 0.72, 360);
         return {
-          left: (width - roadWidth) / 2,
-          right: (width + roadWidth) / 2,
-          width: roadWidth
+          left: (W - roadW) / 2,
+          right: (W + roadW) / 2,
+          width: roadW
         };
       }
 
-      function laneCenter(laneNumber) {
+      function laneWidth() {
+        return roadBounds().width / 3;
+      }
+
+      function laneCenter(index) {
         const road = roadBounds();
-        const laneWidth = road.width / 3;
-
-        return (
-          road.left +
-          laneWidth * laneNumber +
-          laneWidth / 2
-        );
+        const lw = laneWidth();
+        return road.left + lw * index + lw / 2;
       }
 
-      function playerXForLane(laneNumber) {
-        return laneCenter(laneNumber) - player.width / 2;
+      function playerXFromLane(index) {
+        return laneCenter(index) - player.width / 2;
       }
 
-      function placePlayerInLane(laneNumber, immediately = false) {
-        currentLane = Math.max(0, Math.min(2, laneNumber));
-        player.targetX = playerXForLane(currentLane);
-
-        if (immediately) {
+      function setLane(index, snap = false) {
+        currentLane = Math.max(0, Math.min(2, index));
+        player.targetX = playerXFromLane(currentLane);
+        if (snap) {
           player.x = player.targetX;
         }
       }
 
       function resize() {
         const rect = wrap.getBoundingClientRect();
+        W = rect.width;
+        H = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-        width = rect.width;
-        height = rect.height;
+        canvas.width = Math.max(1, Math.floor(W * dpr));
+        canvas.height = Math.max(1, Math.floor(H * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        devicePixelRatio = Math.min(
-          window.devicePixelRatio || 1,
-          2
-        );
-
-        canvas.width = Math.max(
-          1,
-          Math.floor(width * devicePixelRatio)
-        );
-
-        canvas.height = Math.max(
-          1,
-          Math.floor(height * devicePixelRatio)
-        );
-
-        ctx.setTransform(
-          devicePixelRatio,
-          0,
-          0,
-          devicePixelRatio,
-          0,
-          0
-        );
-
-        player.y = height - 205;
-
-        placePlayerInLane(currentLane, true);
-
+        player.y = H - 210;
+        setLane(currentLane, true);
         draw();
       }
 
-      function startGame(event) {
-        if (event) {
-          event.preventDefault();
-          event.stopPropagation();
+      function startGame(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
         }
 
         score = 0;
-        gameSpeed = 260;
+        speed = 250;
         roadOffset = 0;
-        spawnTimer = 1.2;
-
+        spawnTimer = 1.15;
         obstacles = [];
         sparkles = [];
 
-        scoreElement.textContent = "0";
-
-        placePlayerInLane(1, true);
-
+        $("score").textContent = "0";
         $("startPanel").style.display = "none";
         $("gameOver").style.display = "none";
 
+        setLane(1, true);
+
         running = true;
-        lastFrameTime = performance.now();
-
-        requestAnimationFrame(gameLoop);
-      }
-
-      function movePlayer(direction, event) {
-        if (event) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-
-        if (!running) {
-          return;
-        }
-
-        placePlayerInLane(currentLane + direction);
-      }
-
-      /*
-       * pointerdownだけを使います。
-       *
-       * 以前はtouchstart、pointerdown、clickの3種類が
-       * 同時に発動していたため、1回押しただけでも
-       * 2〜3レーン分移動していました。
-       */
-      $("leftBtn").addEventListener(
-        "pointerdown",
-        (event) => movePlayer(-1, event)
-      );
-
-      $("rightBtn").addEventListener(
-        "pointerdown",
-        (event) => movePlayer(1, event)
-      );
-
-      $("startBtn").addEventListener(
-        "click",
-        startGame
-      );
-
-      $("retryBtn").addEventListener(
-        "click",
-        startGame
-      );
-
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "ArrowLeft") {
-          movePlayer(-1, event);
-        }
-
-        if (event.key === "ArrowRight") {
-          movePlayer(1, event);
-        }
-      });
-
-      function spawnObstacle() {
-        const road = roadBounds();
-        const laneWidth = road.width / 3;
-        const lane = Math.floor(Math.random() * 3);
-
-        const kind =
-          Math.random() < 0.78
-            ? "barrier"
-            : "star";
-
-        const obstacleWidth =
-          kind === "barrier" ? 54 : 44;
-
-        const obstacleHeight =
-          kind === "barrier" ? 52 : 50;
-
-        obstacles.push({
-          lane,
-          x:
-            road.left +
-            lane * laneWidth +
-            laneWidth / 2 -
-            obstacleWidth / 2,
-          y: -80,
-          width: obstacleWidth,
-          height: obstacleHeight,
-          kind,
-          passed: false
-        });
-      }
-
-      function rectanglesOverlap(first, second) {
-        /*
-         * 車側の当たり判定を少し小さくして、
-         * 子どもが遊びやすくしています。
-         */
-        const playerHitBox = {
-          x: first.x + 10,
-          y: first.y + 12,
-          width: first.width - 20,
-          height: first.height - 18
-        };
-
-        const obstacleHitBox = {
-          x: second.x + 5,
-          y: second.y + 5,
-          width: second.width - 10,
-          height: second.height - 10
-        };
-
-        return (
-          playerHitBox.x <
-            obstacleHitBox.x + obstacleHitBox.width &&
-          playerHitBox.x + playerHitBox.width >
-            obstacleHitBox.x &&
-          playerHitBox.y <
-            obstacleHitBox.y + obstacleHitBox.height &&
-          playerHitBox.y + playerHitBox.height >
-            obstacleHitBox.y
-        );
+        lastTime = performance.now();
+        requestAnimationFrame(loop);
       }
 
       function endGame() {
@@ -542,225 +317,177 @@
           navigator.vibrate([80, 40, 80]);
         }
 
-        bestScore = Math.max(bestScore, score);
-
-        localStorage.setItem(
-          "aoRacingBest",
-          String(bestScore)
-        );
-
-        bestElement.textContent = bestScore;
-        finalScoreElement.textContent = score;
-
+        best = Math.max(best, score);
+        localStorage.setItem("aoRacingBest", String(best));
+        $("best").textContent = String(best);
+        $("finalScore").textContent = String(score);
         $("gameOver").style.display = "flex";
       }
 
-      function makeSparkles() {
-        for (let index = 0; index < 12; index += 1) {
+      function moveLane(dir, e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        if (!running) return;
+        setLane(currentLane + dir);
+      }
+
+      // 左右ボタンは1回で1レーンだけ動く
+      $("leftBtn").addEventListener("pointerdown", (e) => moveLane(-1, e));
+      $("rightBtn").addEventListener("pointerdown", (e) => moveLane(1, e));
+
+      $("startBtn").addEventListener("click", startGame);
+      $("retryBtn").addEventListener("click", startGame);
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") moveLane(-1, e);
+        if (e.key === "ArrowRight") moveLane(1, e);
+      });
+
+      function spawnObstacle() {
+        const road = roadBounds();
+        const lw = laneWidth();
+        const lane = Math.floor(Math.random() * 3);
+        const kind = Math.random() < 0.78 ? "barrier" : "star";
+        const ow = kind === "barrier" ? 54 : 44;
+        const oh = kind === "barrier" ? 52 : 50;
+
+        obstacles.push({
+          lane,
+          x: road.left + lane * lw + lw / 2 - ow / 2,
+          y: -80,
+          width: ow,
+          height: oh,
+          kind,
+          passed: false
+        });
+      }
+
+      function overlapsCar(playerObj, obstacle) {
+        const a = {
+          x: playerObj.x + 10,
+          y: playerObj.y + 12,
+          width: playerObj.width - 20,
+          height: playerObj.height - 18
+        };
+
+        const b = {
+          x: obstacle.x + 5,
+          y: obstacle.y + 5,
+          width: obstacle.width - 10,
+          height: obstacle.height - 10
+        };
+
+        return (
+          a.x < b.x + b.width &&
+          a.x + a.width > b.x &&
+          a.y < b.y + b.height &&
+          a.y + a.height > b.y
+        );
+      }
+
+      function addSparkles() {
+        for (let i = 0; i < 12; i++) {
           sparkles.push({
             x: player.x + player.width / 2,
-            y: player.y + 20,
-            velocityX: (Math.random() - 0.5) * 190,
-            velocityY: -Math.random() * 190,
+            y: player.y + 18,
+            vx: (Math.random() - 0.5) * 190,
+            vy: -Math.random() * 190,
             life: 0.75
           });
         }
       }
 
-      function update(deltaTime) {
-        roadOffset =
-          (roadOffset + gameSpeed * deltaTime) % 80;
+      function update(dt) {
+        roadOffset = (roadOffset + speed * dt) % 80;
 
-        /*
-         * レーン移動は少しだけ滑らかにします。
-         * 最終的には必ずレーン中央で止まります。
-         */
-        const distanceToTarget =
-          player.targetX - player.x;
+        const diff = player.targetX - player.x;
+        player.x += diff * Math.min(1, dt * 13);
+        if (Math.abs(diff) < 0.5) player.x = player.targetX;
 
-        player.x +=
-          distanceToTarget *
-          Math.min(1, deltaTime * 13);
-
-        if (Math.abs(distanceToTarget) < 0.5) {
-          player.x = player.targetX;
-        }
-
-        spawnTimer -= deltaTime;
-
+        spawnTimer -= dt;
         if (spawnTimer <= 0) {
           spawnObstacle();
-
-          spawnTimer = Math.max(
-            0.72,
-            1.12 - score * 0.01
-          );
+          spawnTimer = Math.max(0.72, 1.12 - score * 0.01);
         }
 
         for (const obstacle of obstacles) {
-          obstacle.y += gameSpeed * deltaTime;
+          obstacle.y += speed * dt;
 
-          if (
-            obstacle.kind === "barrier" &&
-            rectanglesOverlap(player, obstacle)
-          ) {
+          if (obstacle.kind === "barrier" && overlapsCar(player, obstacle)) {
             endGame();
             return;
           }
 
-          if (
-            obstacle.kind === "star" &&
-            rectanglesOverlap(player, obstacle)
-          ) {
-            obstacle.y = height + 100;
+          if (obstacle.kind === "star" && overlapsCar(player, obstacle)) {
+            obstacle.y = H + 100;
             score += 3;
-
-            makeSparkles();
+            addSparkles();
           }
 
-          if (
-            !obstacle.passed &&
-            obstacle.y >
-              player.y + player.height
-          ) {
+          if (!obstacle.passed && obstacle.y > player.y + player.height) {
             obstacle.passed = true;
-
             if (obstacle.kind === "barrier") {
               score += 1;
             }
           }
         }
 
-        obstacles = obstacles.filter(
-          (obstacle) =>
-            obstacle.y < height + 100
-        );
+        obstacles = obstacles.filter((o) => o.y < H + 100);
 
-        for (const sparkle of sparkles) {
-          sparkle.x +=
-            sparkle.velocityX * deltaTime;
-
-          sparkle.y +=
-            sparkle.velocityY * deltaTime;
-
-          sparkle.velocityY +=
-            270 * deltaTime;
-
-          sparkle.life -= deltaTime;
+        for (const s of sparkles) {
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          s.vy += 270 * dt;
+          s.life -= dt;
         }
 
-        sparkles = sparkles.filter(
-          (sparkle) => sparkle.life > 0
-        );
+        sparkles = sparkles.filter((s) => s.life > 0);
 
-        gameSpeed = Math.min(
-          410,
-          260 + score * 4
-        );
-
-        scoreElement.textContent = score;
+        speed = Math.min(410, 250 + score * 4);
+        $("score").textContent = String(score);
       }
 
       function drawBackground() {
         const road = roadBounds();
 
         ctx.globalAlpha = 1;
-
         ctx.fillStyle = "#87ceeb";
-        ctx.fillRect(
-          0,
-          0,
-          width,
-          height * 0.18
-        );
+        ctx.fillRect(0, 0, W, H * 0.18);
 
         ctx.fillStyle = "#58bd47";
-        ctx.fillRect(
-          0,
-          height * 0.18,
-          width,
-          height * 0.82
-        );
+        ctx.fillRect(0, H * 0.18, W, H * 0.82);
 
         ctx.font = "42px system-ui";
         ctx.fillText("☁️", 18, 100);
-        ctx.fillText("☁️", width - 90, 145);
+        ctx.fillText("☁️", W - 90, 145);
 
-        ctx.fillStyle = "#444444";
-        ctx.fillRect(
-          road.left,
-          0,
-          road.width,
-          height
-        );
+        ctx.fillStyle = "#444";
+        ctx.fillRect(road.left, 0, road.width, H);
 
         ctx.fillStyle = "#f4f4f4";
-        ctx.fillRect(
-          road.left,
-          0,
-          7,
-          height
-        );
-
-        ctx.fillRect(
-          road.right - 7,
-          0,
-          7,
-          height
-        );
+        ctx.fillRect(road.left, 0, 7, H);
+        ctx.fillRect(road.right - 7, 0, 7, H);
 
         ctx.fillStyle = "#fff7a8";
+        const lane1 = road.left + road.width / 3;
+        const lane2 = road.left + road.width * 2 / 3;
 
-        const firstLaneLine =
-          road.left + road.width / 3;
-
-        const secondLaneLine =
-          road.left + road.width * 2 / 3;
-
-        for (
-          let y = -80 + roadOffset;
-          y < height;
-          y += 80
-        ) {
-          ctx.fillRect(
-            firstLaneLine - 3,
-            y,
-            6,
-            38
-          );
-
-          ctx.fillRect(
-            secondLaneLine - 3,
-            y,
-            6,
-            38
-          );
+        for (let y = -80 + roadOffset; y < H; y += 80) {
+          ctx.fillRect(lane1 - 3, y, 6, 38);
+          ctx.fillRect(lane2 - 3, y, 6, 38);
         }
 
         ctx.font = "34px system-ui";
-
-        for (
-          let y = 170 - roadOffset * 0.45;
-          y < height;
-          y += 150
-        ) {
-          ctx.fillText(
-            "🌳",
-            Math.max(8, road.left - 58),
-            y
-          );
-
-          ctx.fillText(
-            "🌼",
-            Math.min(width - 42, road.right + 15),
-            y + 55
-          );
+        for (let y = 170 - roadOffset * 0.45; y < H; y += 150) {
+          ctx.fillText("🌳", Math.max(8, road.left - 58), y);
+          ctx.fillText("🌼", Math.min(W - 42, road.right + 15), y + 55);
         }
       }
 
       function drawBarrier(obstacle) {
         ctx.save();
-        ctx.globalAlpha = 1;
 
         const x = obstacle.x;
         const y = obstacle.y;
@@ -775,17 +502,12 @@
         ctx.fillRect(x, y + 12, w, 25);
 
         ctx.fillStyle = "#202020";
-
-        for (
-          let stripeX = x - 8;
-          stripeX < x + w;
-          stripeX += 18
-        ) {
+        for (let sx = x - 8; sx < x + w; sx += 18) {
           ctx.beginPath();
-          ctx.moveTo(stripeX, y + 37);
-          ctx.lineTo(stripeX + 11, y + 12);
-          ctx.lineTo(stripeX + 20, y + 12);
-          ctx.lineTo(stripeX + 9, y + 37);
+          ctx.moveTo(sx, y + 37);
+          ctx.lineTo(sx + 11, y + 12);
+          ctx.lineTo(sx + 20, y + 12);
+          ctx.lineTo(sx + 9, y + 37);
           ctx.closePath();
           ctx.fill();
         }
@@ -796,13 +518,7 @@
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(
-          x + w - 10,
-          y + 7,
-          5,
-          0,
-          Math.PI * 2
-        );
+        ctx.arc(x + w - 10, y + 7, 5, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -810,22 +526,57 @@
 
       function drawStar(obstacle) {
         ctx.save();
-        ctx.globalAlpha = 1;
         ctx.font = "46px system-ui";
-        ctx.fillText(
-          "⭐",
-          obstacle.x,
-          obstacle.y + 43
-        );
+        ctx.fillText("⭐", obstacle.x, obstacle.y + 43);
+        ctx.restore();
+      }
+
+      function drawShieldBadge(cx, cy, scale = 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
+
+        ctx.fillStyle = "#163b8f";
+        ctx.beginPath();
+        ctx.moveTo(0, -11);
+        ctx.lineTo(10, -6);
+        ctx.lineTo(8, 8);
+        ctx.lineTo(0, 14);
+        ctx.lineTo(-8, 8);
+        ctx.lineTo(-10, -6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#ffd83d";
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.lineTo(7, -4);
+        ctx.lineTo(5.5, 6);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-5.5, 6);
+        ctx.lineTo(-7, -4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#163b8f";
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outer = 4.3;
+          const inner = 1.8;
+          const a1 = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+          const a2 = a1 + Math.PI / 5;
+          if (i === 0) ctx.moveTo(Math.cos(a1) * outer, Math.sin(a1) * outer);
+          else ctx.lineTo(Math.cos(a1) * outer, Math.sin(a1) * outer);
+          ctx.lineTo(Math.cos(a2) * inner, Math.sin(a2) * inner);
+        }
+        ctx.closePath();
+        ctx.fill();
+
         ctx.restore();
       }
 
       function drawPlayerCar() {
         ctx.save();
-
-        /*
-         * 必ず不透明にします。
-         */
         ctx.globalAlpha = 1;
 
         const x = player.x;
@@ -833,216 +584,106 @@
         const w = player.width;
         const h = player.height;
 
-        /*
-         * 車の影
-         */
+        // 影
         ctx.fillStyle = "rgba(0,0,0,0.28)";
         ctx.beginPath();
-        ctx.ellipse(
-          x + w / 2,
-          y + h - 2,
-          w * 0.42,
-          11,
-          0,
-          0,
-          Math.PI * 2
-        );
+        ctx.ellipse(x + w / 2, y + h - 2, w * 0.42, 11, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        /*
-         * タイヤ
-         */
-        ctx.fillStyle = "#161616";
+        // タイヤ
+        ctx.fillStyle = "#1a1a1a";
+        ctx.beginPath();
+        ctx.arc(x + 14, y + 24, 11, 0, Math.PI * 2);
+        ctx.arc(x + w - 14, y + 24, 11, 0, Math.PI * 2);
+        ctx.arc(x + 14, y + h - 24, 11, 0, Math.PI * 2);
+        ctx.arc(x + w - 14, y + h - 24, 11, 0, Math.PI * 2);
+        ctx.fill();
 
-        ctx.fillRect(
-          x + 2,
-          y + 29,
-          12,
-          24
-        );
+        // ホイール
+        ctx.fillStyle = "#bfc6cf";
+        ctx.beginPath();
+        ctx.arc(x + 14, y + 24, 6, 0, Math.PI * 2);
+        ctx.arc(x + w - 14, y + 24, 6, 0, Math.PI * 2);
+        ctx.arc(x + 14, y + h - 24, 6, 0, Math.PI * 2);
+        ctx.arc(x + w - 14, y + h - 24, 6, 0, Math.PI * 2);
+        ctx.fill();
 
-        ctx.fillRect(
-          x + w - 14,
-          y + 29,
-          12,
-          24
-        );
-
-        ctx.fillRect(
-          x + 5,
-          y + h - 31,
-          12,
-          24
-        );
-
-        ctx.fillRect(
-          x + w - 17,
-          y + h - 31,
-          12,
-          24
-        );
-
-        /*
-         * 車体
-         */
-        const bodyGradient =
-          ctx.createLinearGradient(
-            x,
-            y,
-            x + w,
-            y + h
-          );
-
-        bodyGradient.addColorStop(
-          0,
-          "#ff5b45"
-        );
-
-        bodyGradient.addColorStop(
-          0.55,
-          "#e90022"
-        );
-
-        bodyGradient.addColorStop(
-          1,
-          "#9b0018"
-        );
+        // 車体
+        const bodyGradient = ctx.createLinearGradient(x, y, x + w, y + h);
+        bodyGradient.addColorStop(0, "#2f87ff");
+        bodyGradient.addColorStop(0.5, "#0d5edc");
+        bodyGradient.addColorStop(1, "#0a3f96");
 
         ctx.fillStyle = bodyGradient;
-
         ctx.beginPath();
-        ctx.moveTo(x + w / 2, y);
-        ctx.lineTo(x + w - 14, y + 22);
-        ctx.lineTo(x + w - 8, y + h - 18);
-        ctx.quadraticCurveTo(
-          x + w - 8,
-          y + h,
-          x + w / 2,
-          y + h
-        );
-        ctx.quadraticCurveTo(
-          x + 8,
-          y + h,
-          x + 8,
-          y + h - 18
-        );
-        ctx.lineTo(x + 14, y + 22);
+        ctx.moveTo(x + 18, y + 8);
+        ctx.lineTo(x + w - 18, y + 8);
+        ctx.quadraticCurveTo(x + w - 8, y + 10, x + w - 6, y + 22);
+        ctx.lineTo(x + w - 4, y + h - 20);
+        ctx.quadraticCurveTo(x + w - 6, y + h - 8, x + w - 18, y + h - 6);
+        ctx.lineTo(x + 18, y + h - 6);
+        ctx.quadraticCurveTo(x + 6, y + h - 8, x + 4, y + h - 20);
+        ctx.lineTo(x + 6, y + 22);
+        ctx.quadraticCurveTo(x + 8, y + 10, x + 18, y + 8);
         ctx.closePath();
         ctx.fill();
 
-        /*
-         * フロントウイング
-         */
-        ctx.fillStyle = "#b9001b";
-        ctx.fillRect(
-          x + 5,
-          y + h - 15,
-          w - 10,
-          10
-        );
+        // フロントバンパー
+        ctx.fillStyle = "#20242c";
+        ctx.fillRect(x + 14, y + h - 12, w - 28, 10);
 
-        /*
-         * リアウイング
-         */
-        ctx.fillStyle = "#222222";
-        ctx.fillRect(
-          x + 7,
-          y + 9,
-          w - 14,
-          8
-        );
-
-        /*
-         * コックピット
-         */
-        ctx.fillStyle = "#19384f";
-
+        // 上部キャビン
+        ctx.fillStyle = "#111827";
         ctx.beginPath();
-        ctx.ellipse(
-          x + w / 2,
-          y + 41,
-          13,
-          19,
-          0,
-          0,
-          Math.PI * 2
-        );
+        ctx.moveTo(x + 18, y + 18);
+        ctx.lineTo(x + w - 18, y + 18);
+        ctx.lineTo(x + w - 24, y + 42);
+        ctx.lineTo(x + 24, y + 42);
+        ctx.closePath();
         ctx.fill();
 
-        /*
-         * ガラスの光
-         */
-        ctx.fillStyle =
-          "rgba(255,255,255,0.75)";
-
+        // フロントガラス
+        ctx.fillStyle = "#8fd3ff";
         ctx.beginPath();
-        ctx.ellipse(
-          x + w / 2 - 4,
-          y + 35,
-          4,
-          9,
-          -0.3,
-          0,
-          Math.PI * 2
-        );
+        ctx.moveTo(x + 24, y + 22);
+        ctx.lineTo(x + w - 24, y + 22);
+        ctx.lineTo(x + w - 28, y + 40);
+        ctx.lineTo(x + 28, y + 40);
+        ctx.closePath();
         ctx.fill();
 
-        /*
-         * 黄色いライン
-         */
-        ctx.fillStyle = "#ffd800";
+        // 白ライン
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x + 18, y + 46, w - 36, 8);
 
-        ctx.fillRect(
-          x + w / 2 - 3,
-          y + 4,
-          6,
-          20
-        );
+        // 黄色ライン
+        ctx.fillStyle = "#ffd400";
+        ctx.fillRect(x + 20, y + 56, w - 40, 5);
 
-        ctx.fillRect(
-          x + w / 2 - 3,
-          y + 62,
-          6,
-          20
-        );
+        // 上部ライト
+        ctx.fillStyle = "#e53935";
+        ctx.fillRect(x + 24, y + 10, 10, 8);
+        ctx.fillStyle = "#1e88e5";
+        ctx.fillRect(x + w - 34, y + 10, 10, 8);
 
-        /*
-         * ライト
-         */
-        ctx.fillStyle = "#fff6a8";
+        // フロントグリル
+        ctx.fillStyle = "#c0c6cf";
+        ctx.fillRect(x + 28, y + h - 18, w - 56, 5);
 
-        ctx.beginPath();
-        ctx.arc(
-          x + 20,
-          y + h - 20,
-          4,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
+        // ヘッドライト
+        ctx.fillStyle = "#fff3a3";
+        ctx.fillRect(x + 12, y + h - 24, 8, 6);
+        ctx.fillRect(x + w - 20, y + h - 24, 8, 6);
 
-        ctx.beginPath();
-        ctx.arc(
-          x + w - 20,
-          y + h - 20,
-          4,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
+        // 横のバッジ風
+        drawShieldBadge(x + w - 14, y + 52, 1);
 
-        /*
-         * 白い輪郭
-         */
-        ctx.strokeStyle =
-          "rgba(255,255,255,0.75)";
-
+        // ハイライト
+        ctx.strokeStyle = "rgba(255,255,255,0.65)";
         ctx.lineWidth = 2;
-
         ctx.beginPath();
-        ctx.moveTo(x + w / 2, y + 2);
-        ctx.lineTo(x + w - 15, y + 23);
-        ctx.lineTo(x + w - 10, y + h - 18);
+        ctx.moveTo(x + 22, y + 16);
+        ctx.lineTo(x + w - 22, y + 16);
         ctx.stroke();
 
         ctx.restore();
@@ -1050,88 +691,54 @@
 
       function drawSparkles() {
         ctx.save();
-        ctx.globalAlpha = 1;
         ctx.font = "22px system-ui";
 
-        for (const sparkle of sparkles) {
-          ctx.globalAlpha = Math.max(
-            0,
-            sparkle.life / 0.75
-          );
-
-          ctx.fillText(
-            "✨",
-            sparkle.x,
-            sparkle.y
-          );
+        for (const s of sparkles) {
+          ctx.globalAlpha = Math.max(0, s.life / 0.75);
+          ctx.fillText("✨", s.x, s.y);
         }
 
         ctx.restore();
+        ctx.globalAlpha = 1;
       }
 
       function draw() {
-        if (!width || !height) {
-          return;
-        }
+        if (!W || !H) return;
 
-        ctx.clearRect(
-          0,
-          0,
-          width,
-          height
-        );
+        ctx.clearRect(0, 0, W, H);
 
         drawBackground();
 
         for (const obstacle of obstacles) {
-          if (obstacle.kind === "barrier") {
-            drawBarrier(obstacle);
-          } else {
-            drawStar(obstacle);
-          }
+          if (obstacle.kind === "barrier") drawBarrier(obstacle);
+          else drawStar(obstacle);
         }
 
         drawPlayerCar();
         drawSparkles();
 
-        /*
-         * 次の描画に透明度が残らないようにします。
-         */
         ctx.globalAlpha = 1;
       }
 
-      function gameLoop(currentTime) {
+      function loop(now) {
         if (!running) {
           draw();
           return;
         }
 
-        const deltaTime = Math.min(
-          0.035,
-          (currentTime - lastFrameTime) / 1000
-        );
+        const dt = Math.min(0.035, (now - lastTime) / 1000);
+        lastTime = now;
 
-        lastFrameTime = currentTime;
-
-        update(deltaTime);
+        update(dt);
         draw();
 
-        if (running) {
-          requestAnimationFrame(gameLoop);
-        }
+        if (running) requestAnimationFrame(loop);
       }
 
-      window.addEventListener(
-        "resize",
-        resize
-      );
-
-      window.addEventListener(
-        "orientationchange",
-        () => {
-          window.setTimeout(resize, 200);
-        }
-      );
+      window.addEventListener("resize", resize);
+      window.addEventListener("orientationchange", () => {
+        setTimeout(resize, 200);
+      });
 
       resize();
     })();
