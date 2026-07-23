@@ -127,29 +127,6 @@
       pointer-events: none;
     }
 
-    #warningText {
-      position: absolute;
-      top: 31%;
-      left: 50%;
-      z-index: 7;
-      display: none;
-      padding: 10px 18px;
-      border: 4px solid white;
-      border-radius: 22px;
-      background: #ffcf25;
-      box-shadow: 0 6px 15px rgba(0,0,0,.22);
-      color: #342400;
-      font-size: 30px;
-      font-weight: 1000;
-      transform: translateX(-50%);
-      animation: warningPulse .35s infinite alternate;
-      pointer-events: none;
-    }
-
-    @keyframes warningPulse {
-      from { transform: translateX(-50%) scale(.96); }
-      to   { transform: translateX(-50%) scale(1.07); }
-    }
 
     #topButtons {
       position: absolute;
@@ -377,7 +354,6 @@
     ミッションを えらぼう！
   </div>
 
-  <div id="warningText">⚠️ あぶない！</div>
 
   <div id="topButtons">
     <button class="roundButton" id="soundBtn" type="button" aria-label="おと">🔊</button>
@@ -442,7 +418,7 @@
         </button>
         <button class="optionButton" type="button" data-value="rescue">
           <span class="emoji">🐶</span>
-          3にん<br>たすけよう
+          こいぬを<br>3びき
         </button>
       </div>
 
@@ -558,22 +534,19 @@
       baseSpeed: 205,
       maxSpeed: 320,
       spawnBase: 1.42,
-      spawnMinimum: .95,
-      warningDistance: 310
+      spawnMinimum: .95
     },
     normal: {
       baseSpeed: 250,
       maxSpeed: 400,
       spawnBase: 1.13,
-      spawnMinimum: .72,
-      warningDistance: 270
+      spawnMinimum: .72
     },
     fast: {
       baseSpeed: 295,
       maxSpeed: 480,
       spawnBase: .94,
-      spawnMinimum: .58,
-      warningDistance: 235
+      spawnMinimum: .58
     }
   };
 
@@ -663,10 +636,6 @@
     playTone(360, .045, "square", .025);
   }
 
-  function playWarningSound() {
-    playTone(760, .09, "square", .04, 0);
-    playTone(760, .09, "square", .04, .13);
-  }
 
   function playStarSound() {
     playTone(700, .09, "sine", .06, 0);
@@ -759,7 +728,7 @@
       return `⭐ ほし ${starsCollected}/5　${sceneryNames[backgroundStage]}`;
     }
 
-    return `🐶 たすけた ${rescuedCount}/3　${sceneryNames[backgroundStage]}`;
+    return `🐶 こいぬ ${rescuedCount}/3　${sceneryNames[backgroundStage]}`;
   }
 
   function updateHud() {
@@ -977,10 +946,73 @@
     return "puddle";
   }
 
+  function isDangerKind(kind) {
+    return kind === "barrier" ||
+           kind === "cone" ||
+           kind === "puddle";
+  }
+
+  function makeObjectId() {
+    if (
+      window.crypto &&
+      typeof window.crypto.randomUUID === "function"
+    ) {
+      return window.crypto.randomUUID();
+    }
+
+    return String(Date.now()) + "-" + String(Math.random());
+  }
+
+  function chooseSpawnLane(kind) {
+    let candidates = [0, 1, 2];
+
+    const nearbyObjects = obstacles.filter(object => {
+      return (
+        !object.removed &&
+        object.y > -170 &&
+        object.y < 190
+      );
+    });
+
+    /*
+     * 近い位置に危険物が2レーン分ある場合は、
+     * 3つ目のレーンを塞がず、既に使われている
+     * レーン側へ重ねて出現させます。
+     */
+    if (isDangerKind(kind)) {
+      const dangerLanes = [
+        ...new Set(
+          nearbyObjects
+            .filter(object => isDanger(object))
+            .map(object => object.lane)
+        )
+      ];
+
+      if (dangerLanes.length >= 2) {
+        candidates = dangerLanes;
+      }
+    }
+
+    /*
+     * 同じレーンに物が密集しすぎないよう、
+     * 近くにある物の数が少ないレーンを優先します。
+     */
+    const counts = candidates.map(lane => {
+      return nearbyObjects.filter(object => object.lane === lane).length;
+    });
+
+    const minimumCount = Math.min(...counts);
+
+    const bestLanes = candidates.filter((lane, index) => {
+      return counts[index] === minimumCount;
+    });
+
+    return bestLanes[Math.floor(Math.random() * bestLanes.length)];
+  }
+
   function spawnObject() {
     const road = roadBounds();
     const width = laneWidth();
-    const lane = Math.floor(Math.random() * 3);
 
     const group = chooseSpawnKind();
     let kind = group;
@@ -988,6 +1020,8 @@
     if (group === "danger") {
       kind = chooseDangerType();
     }
+
+    const lane = chooseSpawnLane(kind);
 
     const sizes = {
       barrier: [58, 55],
@@ -1000,7 +1034,7 @@
     const [objectWidth, objectHeight] = sizes[kind];
 
     obstacles.push({
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+      id: makeObjectId(),
       lane,
       x: road.left + lane * width + width / 2 - objectWidth / 2,
       y: -90,
@@ -1009,8 +1043,7 @@
       kind,
       passed: false,
       removed: false,
-      hit: false,
-      warned: false
+      hit: false
     });
   }
 
@@ -1074,6 +1107,12 @@
     spinTime = 1.2;
     invincibleTime = 2.2;
     player.rotation = 0;
+
+    /*
+     * スピン後に危険物のあるレーンへ残り続けないよう、
+     * 安全性の高い中央レーンへ戻します。
+     */
+    setLane(1);
     addParticles("💫", 10, 160);
   }
 
@@ -1123,7 +1162,7 @@
 
     if (selectedMission === "rescue" && rescuedCount >= 3) {
       complete = true;
-      message = "3にん たすけられたよ！";
+      message = "こいぬを 3びき たすけたよ！";
     }
 
     if (!complete) return;
@@ -1159,29 +1198,6 @@
     $("finalScore").textContent = String(score);
     $("finalStars").textContent = resultStarString();
     $("gameOver").style.display = "flex";
-  }
-
-  function updateWarning() {
-    const settings = difficultySettings[selectedDifficulty];
-    let dangerNear = false;
-
-    for (const object of obstacles) {
-      if (!isDanger(object) || object.removed) continue;
-      if (object.lane !== currentLane) continue;
-
-      const distance = player.y - (object.y + object.height);
-
-      if (distance > 75 && distance < settings.warningDistance) {
-        dangerNear = true;
-
-        if (!object.warned) {
-          object.warned = true;
-          playWarningSound();
-        }
-      }
-    }
-
-    $("warningText").style.display = dangerNear ? "block" : "none";
   }
 
   function update(deltaTime) {
@@ -1298,7 +1314,6 @@
       settings.baseSpeed + score * 3.2
     );
 
-    updateWarning();
     updateHud();
     checkMissionComplete();
   }
@@ -1508,23 +1523,37 @@
     ctx.save();
     ctx.globalAlpha = 1;
 
-    const options = ["🐶", "🚗", "🚒"];
-    const symbol = options[Math.abs(object.lane + Math.floor(object.y / 100)) % options.length];
+    /*
+     * 救助対象は毎回、仔犬だけを表示します。
+     */
+    ctx.font = "49px system-ui";
+    ctx.fillText("🐶", object.x, object.y + 46);
 
-    ctx.font = "47px system-ui";
-    ctx.fillText(symbol, object.x, object.y + 45);
-
+    /*
+     * 救助対象だと分かりやすいよう、
+     * 青い「！」マークを添えます。
+     */
     ctx.fillStyle = "#fff";
     ctx.strokeStyle = "#1676e8";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(object.x + object.width - 4, object.y + 5, 12, 0, Math.PI * 2);
+    ctx.arc(
+      object.x + object.width - 3,
+      object.y + 6,
+      12,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#1676e8";
     ctx.font = "bold 17px system-ui";
-    ctx.fillText("!", object.x + object.width - 8, object.y + 11);
+    ctx.fillText(
+      "!",
+      object.x + object.width - 7,
+      object.y + 12
+    );
 
     ctx.restore();
   }
