@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#87ceeb" />
+  <title>あおのレーシング</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:#87ceeb}
+    body{display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+    #gameWrap{position:relative;width:min(100vw,520px);height:100dvh;overflow:hidden;background:#87ceeb;user-select:none}
+    canvas{display:block;width:100%;height:100%;pointer-events:none}
+    #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;z-index:3;pointer-events:none}
+    .badge{background:rgba(255,255,255,.94);border:3px solid white;border-radius:18px;padding:8px 14px;font-weight:800;font-size:20px;box-shadow:0 4px 10px rgba(0,0,0,.15)}
+    #controls{position:absolute;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 18px;z-index:4}
+    .control{width:42%;height:88px;border:0;border-radius:28px;font-size:46px;font-weight:900;background:rgba(255,255,255,.94);box-shadow:0 7px 0 rgba(0,0,0,.2);touch-action:manipulation}
+    .control:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+    #startPanel,#gameOver{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(40,120,180,.34);pointer-events:auto}
+    #gameOver{display:none}
+    .card{width:100%;background:rgba(255,255,255,.96);border:5px solid white;border-radius:34px;text-align:center;padding:24px 18px;box-shadow:0 12px 28px rgba(0,0,0,.2)}
+    h1{margin:0 0 12px;font-size:38px;line-height:1.15}
+    .carHero{font-size:88px;line-height:1}
+    .lead{font-size:22px;font-weight:700;line-height:1.55;margin:10px 0 18px}
+    .bigBtn{position:relative;z-index:30;width:100%;min-height:82px;border:0;border-radius:28px;font-size:30px;font-weight:900;color:white;background:#ff6b35;box-shadow:0 7px 0 #b93f19;touch-action:manipulation;cursor:pointer}
+    .bigBtn:active{transform:translateY(5px);box-shadow:0 2px 0 #b93f19}
+    .small{font-size:18px;margin-top:14px}
+  </style>
+</head>
+<body>
+<div id="gameWrap">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="badge">⭐ <span id="score">0</span></div>
+    <div class="badge">🏁 <span id="best">0</span></div>
+  </div>
+
+  <div id="controls">
+    <button class="control" id="leftBtn" type="button" aria-label="ひだり">⬅️</button>
+    <button class="control" id="rightBtn" type="button" aria-label="みぎ">➡️</button>
+  </div>
+
+  <div id="startPanel">
+    <div class="card">
+      <div class="carHero">🏎️</div>
+      <h1>あおの<br>レーシング</h1>
+      <div class="lead">ひだり・みぎに うごいて<br>コーンを よけよう！</div>
+      <button class="bigBtn" id="startBtn" type="button">スタート！</button>
+      <div class="small">ボタンを おして あそんでね</div>
+    </div>
+  </div>
+
+  <div id="gameOver">
+    <div class="card">
+      <div class="carHero">😄</div>
+      <h1>もういっかい！</h1>
+      <div class="lead">スコア：<span id="finalScore">0</span><br>よくがんばったね！</div>
+      <button class="bigBtn" id="retryBtn" type="button">もういちど</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const canvas = $('game');
+  const ctx = canvas.getContext('2d');
+  const wrap = $('gameWrap');
+
+  let W=0,H=0,dpr=1,running=false,last=0,score=0;
+  let best=Number(localStorage.getItem('aoRacingBest')||0);
+  let roadOffset=0,spawnTimer=0,speed=260;
+  const player={x:0,y:0,w:54,h:90,targetX:0};
+  let obstacles=[],sparkles=[];
+
+  $('best').textContent=best;
+
+  function resize(){
+    const r=wrap.getBoundingClientRect();
+    W=r.width; H=r.height; dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.max(1,Math.floor(W*dpr));
+    canvas.height=Math.max(1,Math.floor(H*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    player.y=H-195;
+    if(!player.x){player.x=W/2-player.w/2;player.targetX=player.x}
+    draw();
+  }
+
+  function roadBounds(){
+    const roadW=Math.min(W*.72,360);
+    return {left:(W-roadW)/2,right:(W+roadW)/2,width:roadW};
+  }
+
+  function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+
+  function startGame(e){
+    if(e){e.preventDefault();e.stopPropagation()}
+    score=0; speed=260; obstacles=[]; sparkles=[]; spawnTimer=0;
+    player.x=W/2-player.w/2; player.targetX=player.x;
+    $('startPanel').style.display='none';
+    $('gameOver').style.display='none';
+    running=true; last=performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function activateButton(el,handler){
+    let done=false;
+    el.addEventListener('touchend',e=>{done=true;handler(e)},{passive:false});
+    el.addEventListener('pointerup',e=>{if(!done)handler(e);done=false});
+    el.addEventListener('click',e=>handler(e));
+  }
+
+  activateButton($('startBtn'),startGame);
+  activateButton($('retryBtn'),startGame);
+
+  function move(dir,e){
+    if(e){e.preventDefault();e.stopPropagation()}
+    if(!running)return;
+    const b=roadBounds();
+    player.targetX=clamp(player.targetX+dir*(b.width/3),b.left+10,b.right-player.w-10);
+  }
+
+  ['touchstart','pointerdown','click'].forEach(type=>{
+    $('leftBtn').addEventListener(type,e=>move(-1,e),{passive:false});
+    $('rightBtn').addEventListener(type,e=>move(1,e),{passive:false});
+  });
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft')move(-1);
+    if(e.key==='ArrowRight')move(1);
+  });
+
+  function spawnObstacle(){
+    const b=roadBounds(), laneW=b.width/3, lane=Math.floor(Math.random()*3), size=44;
+    obstacles.push({x:b.left+lane*laneW+laneW/2-size/2,y:-80,w:size,h:58,kind:Math.random()<.75?'cone':'star',passed:false});
+  }
+
+  function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+
+  function endGame(){
+    running=false;
+    if(navigator.vibrate)navigator.vibrate([80,40,80]);
+    best=Math.max(best,score);
+    localStorage.setItem('aoRacingBest',best);
+    $('best').textContent=best;
+    $('finalScore').textContent=score;
+    $('gameOver').style.display='flex';
+  }
+
+  function update(dt){
+    roadOffset=(roadOffset+speed*dt)%80;
+    player.x+=(player.targetX-player.x)*Math.min(1,dt*12);
+    spawnTimer-=dt;
+    if(spawnTimer<=0){spawnObstacle();spawnTimer=Math.max(.62,1.08-score*.012)}
+
+    for(const o of obstacles){
+      o.y+=speed*dt;
+      if(o.kind==='cone'&&hit(player,o)){endGame();return}
+      if(o.kind==='star'&&hit(player,o)){
+        o.y=H+100;score+=3;
+        for(let i=0;i<10;i++)sparkles.push({x:player.x+player.w/2,y:player.y,vx:(Math.random()-.5)*180,vy:-Math.random()*180,life:.7});
+      }
+      if(!o.passed&&o.y>player.y+player.h){o.passed=true;if(o.kind==='cone')score++}
+    }
+
+    obstacles=obstacles.filter(o=>o.y<H+100);
+    for(const s of sparkles){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=260*dt;s.life-=dt}
+    sparkles=sparkles.filter(s=>s.life>0);
+    speed=Math.min(420,260+score*5);
+    $('score').textContent=score;
+  }
+
+  function draw(){
+    if(!W||!H)return;
+    ctx.clearRect(0,0,W,H);
+    const b=roadBounds();
+    ctx.fillStyle='#87ceeb';ctx.fillRect(0,0,W,H*.18);
+    ctx.fillStyle='#59b84a';ctx.fillRect(0,H*.18,W,H*.82);
+    ctx.font='42px system-ui';ctx.fillText('☁️',18,100);ctx.fillText('☁️',W-90,145);
+    ctx.fillStyle='#444';ctx.fillRect(b.left,0,b.width,H);
+    ctx.fillStyle='#f4f4f4';ctx.fillRect(b.left,0,7,H);ctx.fillRect(b.right-7,0,7,H);
+    ctx.fillStyle='#fff7a8';
+    const lane1=b.left+b.width/3,lane2=b.left+b.width*2/3;
+    for(let y=-80+roadOffset;y<H;y+=80){ctx.fillRect(lane1-3,y,6,38);ctx.fillRect(lane2-3,y,6,38)}
+    ctx.font='34px system-ui';
+    for(let y=170-roadOffset*.45;y<H;y+=150){ctx.fillText('🌳',Math.max(8,b.left-58),y);ctx.fillText('🌼',Math.min(W-42,b.right+15),y+55)}
+    for(const o of obstacles){ctx.font=o.kind==='cone'?'52px system-ui':'48px system-ui';ctx.fillText(o.kind==='cone'?'🚧':'⭐',o.x,o.y+48)}
+    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(player.x+player.w/2,player.y+player.h-3,30,12,0,0,Math.PI*2);ctx.fill();
+    ctx.font='76px system-ui';ctx.fillText('🏎️',player.x-7,player.y+72);
+    ctx.font='22px system-ui';for(const s of sparkles)ctx.fillText('✨',s.x,s.y);
+  }
+
+  function loop(now){
+    if(!running){draw();return}
+    const dt=Math.min(.035,(now-last)/1000);last=now;
+    update(dt);draw();
+    if(running)requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize',resize);
+  window.addEventListener('orientationchange',()=>setTimeout(resize,200));
+  resize();
+})();
+</script>
+</body>
+</html>
