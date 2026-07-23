@@ -1,208 +1,1140 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#87ceeb" />
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+  >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#87ceeb">
+
   <title>あおのレーシング</title>
+
   <style>
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:#87ceeb}
-    body{display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-    #gameWrap{position:relative;width:min(100vw,520px);height:100dvh;overflow:hidden;background:#87ceeb;user-select:none}
-    canvas{display:block;width:100%;height:100%;pointer-events:none}
-    #hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;z-index:3;pointer-events:none}
-    .badge{background:rgba(255,255,255,.94);border:3px solid white;border-radius:18px;padding:8px 14px;font-weight:800;font-size:20px;box-shadow:0 4px 10px rgba(0,0,0,.15)}
-    #controls{position:absolute;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 18px;z-index:4}
-    .control{width:42%;height:88px;border:0;border-radius:28px;font-size:46px;font-weight:900;background:rgba(255,255,255,.94);box-shadow:0 7px 0 rgba(0,0,0,.2);touch-action:manipulation}
-    .control:active{transform:translateY(5px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
-    #startPanel,#gameOver{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(40,120,180,.34);pointer-events:auto}
-    #gameOver{display:none}
-    .card{width:100%;background:rgba(255,255,255,.96);border:5px solid white;border-radius:34px;text-align:center;padding:24px 18px;box-shadow:0 12px 28px rgba(0,0,0,.2)}
-    h1{margin:0 0 12px;font-size:38px;line-height:1.15}
-    .carHero{font-size:88px;line-height:1}
-    .lead{font-size:22px;font-weight:700;line-height:1.55;margin:10px 0 18px}
-    .bigBtn{position:relative;z-index:30;width:100%;min-height:82px;border:0;border-radius:28px;font-size:30px;font-weight:900;color:white;background:#ff6b35;box-shadow:0 7px 0 #b93f19;touch-action:manipulation;cursor:pointer}
-    .bigBtn:active{transform:translateY(5px);box-shadow:0 2px 0 #b93f19}
-    .small{font-size:18px;margin-top:14px}
-  </style>
-</head>
-<body>
-<div id="gameWrap">
-  <canvas id="game"></canvas>
-
-  <div id="hud">
-    <div class="badge">⭐ <span id="score">0</span></div>
-    <div class="badge">🏁 <span id="best">0</span></div>
-  </div>
-
-  <div id="controls">
-    <button class="control" id="leftBtn" type="button" aria-label="ひだり">⬅️</button>
-    <button class="control" id="rightBtn" type="button" aria-label="みぎ">➡️</button>
-  </div>
-
-  <div id="startPanel">
-    <div class="card">
-      <div class="carHero">🏎️</div>
-      <h1>あおの<br>レーシング</h1>
-      <div class="lead">ひだり・みぎに うごいて<br>コーンを よけよう！</div>
-      <button class="bigBtn" id="startBtn" type="button">スタート！</button>
-      <div class="small">ボタンを おして あそんでね</div>
-    </div>
-  </div>
-
-  <div id="gameOver">
-    <div class="card">
-      <div class="carHero">😄</div>
-      <h1>もういっかい！</h1>
-      <div class="lead">スコア：<span id="finalScore">0</span><br>よくがんばったね！</div>
-      <button class="bigBtn" id="retryBtn" type="button">もういちど</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(function(){
-  const $ = id => document.getElementById(id);
-  const canvas = $('game');
-  const ctx = canvas.getContext('2d');
-  const wrap = $('gameWrap');
-
-  let W=0,H=0,dpr=1,running=false,last=0,score=0;
-  let best=Number(localStorage.getItem('aoRacingBest')||0);
-  let roadOffset=0,spawnTimer=0,speed=260;
-  const player={x:0,y:0,w:54,h:90,targetX:0};
-  let obstacles=[],sparkles=[];
-
-  $('best').textContent=best;
-
-  function resize(){
-    const r=wrap.getBoundingClientRect();
-    W=r.width; H=r.height; dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=Math.max(1,Math.floor(W*dpr));
-    canvas.height=Math.max(1,Math.floor(H*dpr));
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    player.y=H-195;
-    if(!player.x){player.x=W/2-player.w/2;player.targetX=player.x}
-    draw();
-  }
-
-  function roadBounds(){
-    const roadW=Math.min(W*.72,360);
-    return {left:(W-roadW)/2,right:(W+roadW)/2,width:roadW};
-  }
-
-  function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
-
-  function startGame(e){
-    if(e){e.preventDefault();e.stopPropagation()}
-    score=0; speed=260; obstacles=[]; sparkles=[]; spawnTimer=0;
-    player.x=W/2-player.w/2; player.targetX=player.x;
-    $('startPanel').style.display='none';
-    $('gameOver').style.display='none';
-    running=true; last=performance.now();
-    requestAnimationFrame(loop);
-  }
-
-  function activateButton(el,handler){
-    let done=false;
-    el.addEventListener('touchend',e=>{done=true;handler(e)},{passive:false});
-    el.addEventListener('pointerup',e=>{if(!done)handler(e);done=false});
-    el.addEventListener('click',e=>handler(e));
-  }
-
-  activateButton($('startBtn'),startGame);
-  activateButton($('retryBtn'),startGame);
-
-  function move(dir,e){
-    if(e){e.preventDefault();e.stopPropagation()}
-    if(!running)return;
-    const b=roadBounds();
-    player.targetX=clamp(player.targetX+dir*(b.width/3),b.left+10,b.right-player.w-10);
-  }
-
-  ['touchstart','pointerdown','click'].forEach(type=>{
-    $('leftBtn').addEventListener(type,e=>move(-1,e),{passive:false});
-    $('rightBtn').addEventListener(type,e=>move(1,e),{passive:false});
-  });
-
-  window.addEventListener('keydown',e=>{
-    if(e.key==='ArrowLeft')move(-1);
-    if(e.key==='ArrowRight')move(1);
-  });
-
-  function spawnObstacle(){
-    const b=roadBounds(), laneW=b.width/3, lane=Math.floor(Math.random()*3), size=44;
-    obstacles.push({x:b.left+lane*laneW+laneW/2-size/2,y:-80,w:size,h:58,kind:Math.random()<.75?'cone':'star',passed:false});
-  }
-
-  function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-
-  function endGame(){
-    running=false;
-    if(navigator.vibrate)navigator.vibrate([80,40,80]);
-    best=Math.max(best,score);
-    localStorage.setItem('aoRacingBest',best);
-    $('best').textContent=best;
-    $('finalScore').textContent=score;
-    $('gameOver').style.display='flex';
-  }
-
-  function update(dt){
-    roadOffset=(roadOffset+speed*dt)%80;
-    player.x+=(player.targetX-player.x)*Math.min(1,dt*12);
-    spawnTimer-=dt;
-    if(spawnTimer<=0){spawnObstacle();spawnTimer=Math.max(.62,1.08-score*.012)}
-
-    for(const o of obstacles){
-      o.y+=speed*dt;
-      if(o.kind==='cone'&&hit(player,o)){endGame();return}
-      if(o.kind==='star'&&hit(player,o)){
-        o.y=H+100;score+=3;
-        for(let i=0;i<10;i++)sparkles.push({x:player.x+player.w/2,y:player.y,vx:(Math.random()-.5)*180,vy:-Math.random()*180,life:.7});
-      }
-      if(!o.passed&&o.y>player.y+player.h){o.passed=true;if(o.kind==='cone')score++}
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    obstacles=obstacles.filter(o=>o.y<H+100);
-    for(const s of sparkles){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=260*dt;s.life-=dt}
-    sparkles=sparkles.filter(s=>s.life>0);
-    speed=Math.min(420,260+score*5);
-    $('score').textContent=score;
-  }
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family:
+        system-ui,
+        -apple-system,
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
+      background: #87ceeb;
+    }
 
-  function draw(){
-    if(!W||!H)return;
-    ctx.clearRect(0,0,W,H);
-    const b=roadBounds();
-    ctx.fillStyle='#87ceeb';ctx.fillRect(0,0,W,H*.18);
-    ctx.fillStyle='#59b84a';ctx.fillRect(0,H*.18,W,H*.82);
-    ctx.font='42px system-ui';ctx.fillText('☁️',18,100);ctx.fillText('☁️',W-90,145);
-    ctx.fillStyle='#444';ctx.fillRect(b.left,0,b.width,H);
-    ctx.fillStyle='#f4f4f4';ctx.fillRect(b.left,0,7,H);ctx.fillRect(b.right-7,0,7,H);
-    ctx.fillStyle='#fff7a8';
-    const lane1=b.left+b.width/3,lane2=b.left+b.width*2/3;
-    for(let y=-80+roadOffset;y<H;y+=80){ctx.fillRect(lane1-3,y,6,38);ctx.fillRect(lane2-3,y,6,38)}
-    ctx.font='34px system-ui';
-    for(let y=170-roadOffset*.45;y<H;y+=150){ctx.fillText('🌳',Math.max(8,b.left-58),y);ctx.fillText('🌼',Math.min(W-42,b.right+15),y+55)}
-    for(const o of obstacles){ctx.font=o.kind==='cone'?'52px system-ui':'48px system-ui';ctx.fillText(o.kind==='cone'?'🚧':'⭐',o.x,o.y+48)}
-    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(player.x+player.w/2,player.y+player.h-3,30,12,0,0,Math.PI*2);ctx.fill();
-    ctx.font='76px system-ui';ctx.fillText('🏎️',player.x-7,player.y+72);
-    ctx.font='22px system-ui';for(const s of sparkles)ctx.fillText('✨',s.x,s.y);
-  }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
 
-  function loop(now){
-    if(!running){draw();return}
-    const dt=Math.min(.035,(now-last)/1000);last=now;
-    update(dt);draw();
-    if(running)requestAnimationFrame(loop);
-  }
+    #gameWrap {
+      position: relative;
+      width: min(100vw, 520px);
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: #87ceeb;
+      user-select: none;
+    }
 
-  window.addEventListener('resize',resize);
-  window.addEventListener('orientationchange',()=>setTimeout(resize,200));
-  resize();
-})();
-</script>
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #hud {
+      position: absolute;
+      top: max(10px, env(safe-area-inset-top));
+      left: 10px;
+      right: 10px;
+      z-index: 3;
+
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+
+      pointer-events: none;
+    }
+
+    .badge {
+      padding: 8px 14px;
+      border: 3px solid white;
+      border-radius: 18px;
+
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    #controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index: 4;
+
+      display: flex;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .control {
+      width: 42%;
+      height: 88px;
+      border: 0;
+      border-radius: 28px;
+
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22);
+
+      font-size: 46px;
+      font-weight: 900;
+
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .control:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+    }
+
+    #startPanel,
+    #gameOver {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 22px;
+      background: rgba(40, 120, 180, 0.34);
+    }
+
+    #gameOver {
+      display: none;
+    }
+
+    .card {
+      width: 100%;
+      padding: 24px 18px;
+
+      border: 5px solid white;
+      border-radius: 34px;
+
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 38px;
+      line-height: 1.15;
+    }
+
+    .carHero {
+      font-size: 88px;
+      line-height: 1;
+    }
+
+    .lead {
+      margin: 10px 0 18px;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .bigBtn {
+      position: relative;
+      z-index: 30;
+
+      width: 100%;
+      min-height: 82px;
+      border: 0;
+      border-radius: 28px;
+
+      color: white;
+      background: #ff6b35;
+      box-shadow: 0 7px 0 #b93f19;
+
+      font-size: 30px;
+      font-weight: 900;
+
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .bigBtn:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 #b93f19;
+    }
+
+    .small {
+      margin-top: 14px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="gameWrap">
+    <canvas id="game"></canvas>
+
+    <div id="hud">
+      <div class="badge">
+        ⭐ <span id="score">0</span>
+      </div>
+
+      <div class="badge">
+        🏁 <span id="best">0</span>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button
+        class="control"
+        id="leftBtn"
+        type="button"
+        aria-label="ひだり"
+      >
+        ⬅️
+      </button>
+
+      <button
+        class="control"
+        id="rightBtn"
+        type="button"
+        aria-label="みぎ"
+      >
+        ➡️
+      </button>
+    </div>
+
+    <div id="startPanel">
+      <div class="card">
+        <div class="carHero">🏎️</div>
+
+        <h1>
+          あおの<br>
+          レーシング
+        </h1>
+
+        <div class="lead">
+          ひだり・みぎに うごいて<br>
+          コーンを よけよう！
+        </div>
+
+        <button
+          class="bigBtn"
+          id="startBtn"
+          type="button"
+        >
+          スタート！
+        </button>
+
+        <div class="small">
+          ボタンを おして あそんでね
+        </div>
+      </div>
+    </div>
+
+    <div id="gameOver">
+      <div class="card">
+        <div class="carHero">😄</div>
+
+        <h1>もういっかい！</h1>
+
+        <div class="lead">
+          スコア：<span id="finalScore">0</span><br>
+          よくがんばったね！
+        </div>
+
+        <button
+          class="bigBtn"
+          id="retryBtn"
+          type="button"
+        >
+          もういちど
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+
+      const canvas = $("game");
+      const ctx = canvas.getContext("2d");
+      const wrap = $("gameWrap");
+
+      const scoreElement = $("score");
+      const bestElement = $("best");
+      const finalScoreElement = $("finalScore");
+
+      let width = 0;
+      let height = 0;
+      let devicePixelRatio = 1;
+
+      let running = false;
+      let lastFrameTime = 0;
+
+      let score = 0;
+      let bestScore = Number(
+        localStorage.getItem("aoRacingBest") || 0
+      );
+
+      let roadOffset = 0;
+      let spawnTimer = 0;
+      let gameSpeed = 260;
+
+      let currentLane = 1;
+
+      let obstacles = [];
+      let sparkles = [];
+
+      const player = {
+        x: 0,
+        y: 0,
+        width: 62,
+        height: 92,
+        targetX: 0
+      };
+
+      bestElement.textContent = bestScore;
+
+      function roadBounds() {
+        const roadWidth = Math.min(width * 0.72, 360);
+
+        return {
+          left: (width - roadWidth) / 2,
+          right: (width + roadWidth) / 2,
+          width: roadWidth
+        };
+      }
+
+      function laneCenter(laneNumber) {
+        const road = roadBounds();
+        const laneWidth = road.width / 3;
+
+        return (
+          road.left +
+          laneWidth * laneNumber +
+          laneWidth / 2
+        );
+      }
+
+      function playerXForLane(laneNumber) {
+        return laneCenter(laneNumber) - player.width / 2;
+      }
+
+      function placePlayerInLane(laneNumber, immediately = false) {
+        currentLane = Math.max(0, Math.min(2, laneNumber));
+        player.targetX = playerXForLane(currentLane);
+
+        if (immediately) {
+          player.x = player.targetX;
+        }
+      }
+
+      function resize() {
+        const rect = wrap.getBoundingClientRect();
+
+        width = rect.width;
+        height = rect.height;
+
+        devicePixelRatio = Math.min(
+          window.devicePixelRatio || 1,
+          2
+        );
+
+        canvas.width = Math.max(
+          1,
+          Math.floor(width * devicePixelRatio)
+        );
+
+        canvas.height = Math.max(
+          1,
+          Math.floor(height * devicePixelRatio)
+        );
+
+        ctx.setTransform(
+          devicePixelRatio,
+          0,
+          0,
+          devicePixelRatio,
+          0,
+          0
+        );
+
+        player.y = height - 205;
+
+        placePlayerInLane(currentLane, true);
+
+        draw();
+      }
+
+      function startGame(event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+
+        score = 0;
+        gameSpeed = 260;
+        roadOffset = 0;
+        spawnTimer = 1.2;
+
+        obstacles = [];
+        sparkles = [];
+
+        scoreElement.textContent = "0";
+
+        placePlayerInLane(1, true);
+
+        $("startPanel").style.display = "none";
+        $("gameOver").style.display = "none";
+
+        running = true;
+        lastFrameTime = performance.now();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function movePlayer(direction, event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+
+        if (!running) {
+          return;
+        }
+
+        placePlayerInLane(currentLane + direction);
+      }
+
+      /*
+       * pointerdownだけを使います。
+       *
+       * 以前はtouchstart、pointerdown、clickの3種類が
+       * 同時に発動していたため、1回押しただけでも
+       * 2〜3レーン分移動していました。
+       */
+      $("leftBtn").addEventListener(
+        "pointerdown",
+        (event) => movePlayer(-1, event)
+      );
+
+      $("rightBtn").addEventListener(
+        "pointerdown",
+        (event) => movePlayer(1, event)
+      );
+
+      $("startBtn").addEventListener(
+        "click",
+        startGame
+      );
+
+      $("retryBtn").addEventListener(
+        "click",
+        startGame
+      );
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+          movePlayer(-1, event);
+        }
+
+        if (event.key === "ArrowRight") {
+          movePlayer(1, event);
+        }
+      });
+
+      function spawnObstacle() {
+        const road = roadBounds();
+        const laneWidth = road.width / 3;
+        const lane = Math.floor(Math.random() * 3);
+
+        const kind =
+          Math.random() < 0.78
+            ? "barrier"
+            : "star";
+
+        const obstacleWidth =
+          kind === "barrier" ? 54 : 44;
+
+        const obstacleHeight =
+          kind === "barrier" ? 52 : 50;
+
+        obstacles.push({
+          lane,
+          x:
+            road.left +
+            lane * laneWidth +
+            laneWidth / 2 -
+            obstacleWidth / 2,
+          y: -80,
+          width: obstacleWidth,
+          height: obstacleHeight,
+          kind,
+          passed: false
+        });
+      }
+
+      function rectanglesOverlap(first, second) {
+        /*
+         * 車側の当たり判定を少し小さくして、
+         * 子どもが遊びやすくしています。
+         */
+        const playerHitBox = {
+          x: first.x + 10,
+          y: first.y + 12,
+          width: first.width - 20,
+          height: first.height - 18
+        };
+
+        const obstacleHitBox = {
+          x: second.x + 5,
+          y: second.y + 5,
+          width: second.width - 10,
+          height: second.height - 10
+        };
+
+        return (
+          playerHitBox.x <
+            obstacleHitBox.x + obstacleHitBox.width &&
+          playerHitBox.x + playerHitBox.width >
+            obstacleHitBox.x &&
+          playerHitBox.y <
+            obstacleHitBox.y + obstacleHitBox.height &&
+          playerHitBox.y + playerHitBox.height >
+            obstacleHitBox.y
+        );
+      }
+
+      function endGame() {
+        running = false;
+
+        if (navigator.vibrate) {
+          navigator.vibrate([80, 40, 80]);
+        }
+
+        bestScore = Math.max(bestScore, score);
+
+        localStorage.setItem(
+          "aoRacingBest",
+          String(bestScore)
+        );
+
+        bestElement.textContent = bestScore;
+        finalScoreElement.textContent = score;
+
+        $("gameOver").style.display = "flex";
+      }
+
+      function makeSparkles() {
+        for (let index = 0; index < 12; index += 1) {
+          sparkles.push({
+            x: player.x + player.width / 2,
+            y: player.y + 20,
+            velocityX: (Math.random() - 0.5) * 190,
+            velocityY: -Math.random() * 190,
+            life: 0.75
+          });
+        }
+      }
+
+      function update(deltaTime) {
+        roadOffset =
+          (roadOffset + gameSpeed * deltaTime) % 80;
+
+        /*
+         * レーン移動は少しだけ滑らかにします。
+         * 最終的には必ずレーン中央で止まります。
+         */
+        const distanceToTarget =
+          player.targetX - player.x;
+
+        player.x +=
+          distanceToTarget *
+          Math.min(1, deltaTime * 13);
+
+        if (Math.abs(distanceToTarget) < 0.5) {
+          player.x = player.targetX;
+        }
+
+        spawnTimer -= deltaTime;
+
+        if (spawnTimer <= 0) {
+          spawnObstacle();
+
+          spawnTimer = Math.max(
+            0.72,
+            1.12 - score * 0.01
+          );
+        }
+
+        for (const obstacle of obstacles) {
+          obstacle.y += gameSpeed * deltaTime;
+
+          if (
+            obstacle.kind === "barrier" &&
+            rectanglesOverlap(player, obstacle)
+          ) {
+            endGame();
+            return;
+          }
+
+          if (
+            obstacle.kind === "star" &&
+            rectanglesOverlap(player, obstacle)
+          ) {
+            obstacle.y = height + 100;
+            score += 3;
+
+            makeSparkles();
+          }
+
+          if (
+            !obstacle.passed &&
+            obstacle.y >
+              player.y + player.height
+          ) {
+            obstacle.passed = true;
+
+            if (obstacle.kind === "barrier") {
+              score += 1;
+            }
+          }
+        }
+
+        obstacles = obstacles.filter(
+          (obstacle) =>
+            obstacle.y < height + 100
+        );
+
+        for (const sparkle of sparkles) {
+          sparkle.x +=
+            sparkle.velocityX * deltaTime;
+
+          sparkle.y +=
+            sparkle.velocityY * deltaTime;
+
+          sparkle.velocityY +=
+            270 * deltaTime;
+
+          sparkle.life -= deltaTime;
+        }
+
+        sparkles = sparkles.filter(
+          (sparkle) => sparkle.life > 0
+        );
+
+        gameSpeed = Math.min(
+          410,
+          260 + score * 4
+        );
+
+        scoreElement.textContent = score;
+      }
+
+      function drawBackground() {
+        const road = roadBounds();
+
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "#87ceeb";
+        ctx.fillRect(
+          0,
+          0,
+          width,
+          height * 0.18
+        );
+
+        ctx.fillStyle = "#58bd47";
+        ctx.fillRect(
+          0,
+          height * 0.18,
+          width,
+          height * 0.82
+        );
+
+        ctx.font = "42px system-ui";
+        ctx.fillText("☁️", 18, 100);
+        ctx.fillText("☁️", width - 90, 145);
+
+        ctx.fillStyle = "#444444";
+        ctx.fillRect(
+          road.left,
+          0,
+          road.width,
+          height
+        );
+
+        ctx.fillStyle = "#f4f4f4";
+        ctx.fillRect(
+          road.left,
+          0,
+          7,
+          height
+        );
+
+        ctx.fillRect(
+          road.right - 7,
+          0,
+          7,
+          height
+        );
+
+        ctx.fillStyle = "#fff7a8";
+
+        const firstLaneLine =
+          road.left + road.width / 3;
+
+        const secondLaneLine =
+          road.left + road.width * 2 / 3;
+
+        for (
+          let y = -80 + roadOffset;
+          y < height;
+          y += 80
+        ) {
+          ctx.fillRect(
+            firstLaneLine - 3,
+            y,
+            6,
+            38
+          );
+
+          ctx.fillRect(
+            secondLaneLine - 3,
+            y,
+            6,
+            38
+          );
+        }
+
+        ctx.font = "34px system-ui";
+
+        for (
+          let y = 170 - roadOffset * 0.45;
+          y < height;
+          y += 150
+        ) {
+          ctx.fillText(
+            "🌳",
+            Math.max(8, road.left - 58),
+            y
+          );
+
+          ctx.fillText(
+            "🌼",
+            Math.min(width - 42, road.right + 15),
+            y + 55
+          );
+        }
+      }
+
+      function drawBarrier(obstacle) {
+        ctx.save();
+        ctx.globalAlpha = 1;
+
+        const x = obstacle.x;
+        const y = obstacle.y;
+        const w = obstacle.width;
+        const h = obstacle.height;
+
+        ctx.fillStyle = "#5a5a5a";
+        ctx.fillRect(x + 7, y + h - 10, 7, 13);
+        ctx.fillRect(x + w - 14, y + h - 10, 7, 13);
+
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillRect(x, y + 12, w, 25);
+
+        ctx.fillStyle = "#202020";
+
+        for (
+          let stripeX = x - 8;
+          stripeX < x + w;
+          stripeX += 18
+        ) {
+          ctx.beginPath();
+          ctx.moveTo(stripeX, y + 37);
+          ctx.lineTo(stripeX + 11, y + 12);
+          ctx.lineTo(stripeX + 20, y + 12);
+          ctx.lineTo(stripeX + 9, y + 37);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "#ff7a00";
+        ctx.beginPath();
+        ctx.arc(x + 10, y + 7, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(
+          x + w - 10,
+          y + 7,
+          5,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawStar(obstacle) {
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.font = "46px system-ui";
+        ctx.fillText(
+          "⭐",
+          obstacle.x,
+          obstacle.y + 43
+        );
+        ctx.restore();
+      }
+
+      function drawPlayerCar() {
+        ctx.save();
+
+        /*
+         * 必ず不透明にします。
+         */
+        ctx.globalAlpha = 1;
+
+        const x = player.x;
+        const y = player.y;
+        const w = player.width;
+        const h = player.height;
+
+        /*
+         * 車の影
+         */
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.beginPath();
+        ctx.ellipse(
+          x + w / 2,
+          y + h - 2,
+          w * 0.42,
+          11,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        /*
+         * タイヤ
+         */
+        ctx.fillStyle = "#161616";
+
+        ctx.fillRect(
+          x + 2,
+          y + 29,
+          12,
+          24
+        );
+
+        ctx.fillRect(
+          x + w - 14,
+          y + 29,
+          12,
+          24
+        );
+
+        ctx.fillRect(
+          x + 5,
+          y + h - 31,
+          12,
+          24
+        );
+
+        ctx.fillRect(
+          x + w - 17,
+          y + h - 31,
+          12,
+          24
+        );
+
+        /*
+         * 車体
+         */
+        const bodyGradient =
+          ctx.createLinearGradient(
+            x,
+            y,
+            x + w,
+            y + h
+          );
+
+        bodyGradient.addColorStop(
+          0,
+          "#ff5b45"
+        );
+
+        bodyGradient.addColorStop(
+          0.55,
+          "#e90022"
+        );
+
+        bodyGradient.addColorStop(
+          1,
+          "#9b0018"
+        );
+
+        ctx.fillStyle = bodyGradient;
+
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y);
+        ctx.lineTo(x + w - 14, y + 22);
+        ctx.lineTo(x + w - 8, y + h - 18);
+        ctx.quadraticCurveTo(
+          x + w - 8,
+          y + h,
+          x + w / 2,
+          y + h
+        );
+        ctx.quadraticCurveTo(
+          x + 8,
+          y + h,
+          x + 8,
+          y + h - 18
+        );
+        ctx.lineTo(x + 14, y + 22);
+        ctx.closePath();
+        ctx.fill();
+
+        /*
+         * フロントウイング
+         */
+        ctx.fillStyle = "#b9001b";
+        ctx.fillRect(
+          x + 5,
+          y + h - 15,
+          w - 10,
+          10
+        );
+
+        /*
+         * リアウイング
+         */
+        ctx.fillStyle = "#222222";
+        ctx.fillRect(
+          x + 7,
+          y + 9,
+          w - 14,
+          8
+        );
+
+        /*
+         * コックピット
+         */
+        ctx.fillStyle = "#19384f";
+
+        ctx.beginPath();
+        ctx.ellipse(
+          x + w / 2,
+          y + 41,
+          13,
+          19,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        /*
+         * ガラスの光
+         */
+        ctx.fillStyle =
+          "rgba(255,255,255,0.75)";
+
+        ctx.beginPath();
+        ctx.ellipse(
+          x + w / 2 - 4,
+          y + 35,
+          4,
+          9,
+          -0.3,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        /*
+         * 黄色いライン
+         */
+        ctx.fillStyle = "#ffd800";
+
+        ctx.fillRect(
+          x + w / 2 - 3,
+          y + 4,
+          6,
+          20
+        );
+
+        ctx.fillRect(
+          x + w / 2 - 3,
+          y + 62,
+          6,
+          20
+        );
+
+        /*
+         * ライト
+         */
+        ctx.fillStyle = "#fff6a8";
+
+        ctx.beginPath();
+        ctx.arc(
+          x + 20,
+          y + h - 20,
+          4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(
+          x + w - 20,
+          y + h - 20,
+          4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        /*
+         * 白い輪郭
+         */
+        ctx.strokeStyle =
+          "rgba(255,255,255,0.75)";
+
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y + 2);
+        ctx.lineTo(x + w - 15, y + 23);
+        ctx.lineTo(x + w - 10, y + h - 18);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawSparkles() {
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.font = "22px system-ui";
+
+        for (const sparkle of sparkles) {
+          ctx.globalAlpha = Math.max(
+            0,
+            sparkle.life / 0.75
+          );
+
+          ctx.fillText(
+            "✨",
+            sparkle.x,
+            sparkle.y
+          );
+        }
+
+        ctx.restore();
+      }
+
+      function draw() {
+        if (!width || !height) {
+          return;
+        }
+
+        ctx.clearRect(
+          0,
+          0,
+          width,
+          height
+        );
+
+        drawBackground();
+
+        for (const obstacle of obstacles) {
+          if (obstacle.kind === "barrier") {
+            drawBarrier(obstacle);
+          } else {
+            drawStar(obstacle);
+          }
+        }
+
+        drawPlayerCar();
+        drawSparkles();
+
+        /*
+         * 次の描画に透明度が残らないようにします。
+         */
+        ctx.globalAlpha = 1;
+      }
+
+      function gameLoop(currentTime) {
+        if (!running) {
+          draw();
+          return;
+        }
+
+        const deltaTime = Math.min(
+          0.035,
+          (currentTime - lastFrameTime) / 1000
+        );
+
+        lastFrameTime = currentTime;
+
+        update(deltaTime);
+        draw();
+
+        if (running) {
+          requestAnimationFrame(gameLoop);
+        }
+      }
+
+      window.addEventListener(
+        "resize",
+        resize
+      );
+
+      window.addEventListener(
+        "orientationchange",
+        () => {
+          window.setTimeout(resize, 200);
+        }
+      );
+
+      resize();
+    })();
+  </script>
 </body>
 </html>
